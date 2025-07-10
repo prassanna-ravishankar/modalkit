@@ -23,6 +23,7 @@ nav:
     - Real-time Analytics: examples/realtime-analytics.md
     - Error Handling: examples/error-handling.md
   - API Reference: modules.md
+  - License: license.md
 plugins:
   - search
   - mkdocstrings:
