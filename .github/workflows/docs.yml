@@ -1,0 +1,115 @@
+name: Deploy Documentation
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
+# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build Documentation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "latest"
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Build documentation
+        run: |
+          uv run mkdocs build --verbose
+          # Create .nojekyll to bypass Jekyll processing
+          touch site/.nojekyll
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./site
+
+  deploy:
+    name: Deploy to GitHub Pages
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  # For PR builds, just build to verify docs compile correctly
+  verify:
+    name: Verify Documentation Build
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "latest"
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Build documentation (verify only)
+        run: |
+          uv run mkdocs build --verbose
+          echo "✅ Documentation builds successfully"
+
+      - name: Check for broken links
+        run: |
+          # Basic check for common documentation issues
+          if grep -r "TODO\|FIXME\|XXX" docs/ --exclude-dir=.git || true; then
+            echo "⚠️  Found TODO/FIXME items in documentation"
+          fi
+
+          # Check for missing images
+          if find docs/ -name "*.md" -exec grep -l "!\[.*\](" {} \; | while read file; do
+            grep -o "!\[.*\]([^)]*)" "$file" | sed 's/.*(\([^)]*\)).*/\1/' | while read img; do
+              if [[ "$img" =~ ^https?:// ]]; then
+                continue  # Skip external URLs
+              fi
+              img_path="docs/$img"
+              if [[ ! -f "$img_path" ]]; then
+                echo "❌ Missing image: $img_path (referenced in $file)"
+                exit 1
+              fi
+            done
+          done; then
+            echo "✅ All referenced images exist"
+          fi

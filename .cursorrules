@@ -1,0 +1,264 @@
+# Modalkit Cursor Rules
+
+## Project Overview
+Modalkit is a Python framework that sits on top of Modal (modal.com) to provide ML-specific patterns and conveniences for deploying machine learning models. It transforms Modal from infrastructure primitives into a complete ML platform with standardized inference pipelines, configuration-driven deployments, and production-ready features.
+
+## Core Architecture
+
+### Key Components
+- **InferencePipeline**: Base class for ML model implementations (preprocess → predict → postprocess)
+- **ModalService**: Modal app orchestration and lifecycle management
+- **ModalConfig**: Configuration translation and Modal resource management
+- **FastAPI Integration**: Automatic API endpoint generation
+- **Configuration System**: YAML-based deployment settings with Pydantic validation
+
+### Design Patterns
+- **Protocol-based abstractions**: Queue backends use Protocol pattern for multiple implementations
+- **Settings translation**: ModalConfig translates declarative YAML config to Modal API calls
+- **Dependency injection**: FastAPI dependency injection for authentication and validation
+- **Hook system**: `on_volume_reload()` allows models to react to infrastructure changes
+- **Type safety**: Pydantic models throughout for configuration and data validation
+
+## Development Guidelines
+
+### Code Style
+- Use modern Python features (3.9+)
+- Follow type hints throughout - use `from __future__ import annotations` for forward references
+- Use Pydantic models for all configuration and data validation
+- Prefer composition over inheritance
+- Keep functions focused and testable
+
+### Testing Philosophy - NON-NEGOTIABLE
+**Test-Driven Development (TDD) is mandatory:**
+1. **Write failing tests first** before any implementation
+2. **Run tests continuously** - execute tests after every change
+3. **Maintain high coverage** - all new code must have tests
+4. **Behavior-focused testing** - test what the code does, not how it does it
+5. **Use realistic test scenarios** - prefer ML use cases like sentiment analysis
+
+### Testing Implementation
+- Framework: Pytest with async support
+- Mock external dependencies (Modal, AWS) using pytest-mock
+- Use tmp_path fixture for temporary directories (security best practice)
+- Organize tests by module: `test_<module_name>.py`
+- Write descriptive test names that explain the behavior being tested
+
+### File Organization
+```
+modalkit/
+├── base_inference.py       # Core ML pipeline base class
+├── model_service.py        # Modal service orchestration
+├── modal_config.py      # Modal configuration management
+├── settings.py        # YAML configuration with Pydantic
+├── fast_api.py        # FastAPI endpoint generation
+├── auth.py           # Authentication middleware
+├── task_queue.py     # Queue abstraction layer
+└── exceptions.py     # Custom exceptions
+
+tests/
+├── test_inference_pipeline.py    # Behavior-focused inference tests
+├── test_modal_service.py         # Service lifecycle and orchestration
+├── test_modal_config.py          # Configuration management
+└── conftest.py                   # Shared test fixtures
+
+docs/
+├── examples/         # Production-ready tutorials
+├── guide/           # User guides
+└── index.md         # Main documentation
+```
+
+## Configuration Standards
+
+### YAML Configuration
+- Default config file: `modalkit.yaml` in project root
+- Environment override: `MODALKIT_CONFIG` environment variable
+- Use realistic, production-ready examples in config files
+- Support hierarchical settings: AppSettings + ModelSettings
+- Environment variable overrides with `MODALKIT_` prefix
+
+### Example Structure
+```yaml
+app_settings:
+  app_prefix: "my-ml-service"
+  auth_config:
+    ssm_key: "/my-service/api-key"  # Preferred
+    # api_key: "hardcoded-key"      # Alternative
+  deployment_config:
+    gpu: "T4"
+    concurrency_limit: 10
+    cloud_bucket_mounts:
+      - mount_point: "/mnt/models"
+        bucket_name: "my-models"
+```
+
+## Modal Integration Best Practices
+
+### Authentication
+- **Production**: Use Modal proxy auth (`secure: true`) or AWS SSM for API keys
+- **Development**: Use hardcoded API keys with `secure: false`
+- Never commit secrets to the repository
+
+### Resource Management
+- Use appropriate GPU types: T4 (cost-effective) → A10G → A100 → H100
+- Configure concurrency limits based on model memory requirements
+- Use read-only cloud bucket mounts for model artifacts
+- Mount only required prefixes with `key_prefix`
+
+### Error Handling
+- Handle CUDA errors by calling `modal.experimental.stop_fetching_inputs()`
+- Provide structured error responses with appropriate HTTP status codes
+- Log errors with context for debugging
+- Send error responses to failure queues for async requests
+
+## Code Patterns
+
+### InferencePipeline Implementation
+```python
+from modalkit.base_inference import InferencePipeline
+from pydantic import BaseModel
+
+class MyModel(InferencePipeline):
+    def preprocess(self, input_list: list[BaseModel]) -> dict:
+        # Clean and prepare inputs
+        return {"processed_data": ...}
+
+    def predict(self, input_list: list[BaseModel], preprocessed_data: dict) -> dict:
+        # Run model inference
+        return {"predictions": ...}
+
+    def postprocess(self, input_list: list[BaseModel], raw_output: dict) -> list[InferenceOutputModel]:
+        # Format outputs
+        return [MyOutput(...) for ... in raw_output["predictions"]]
+```
+
+### Modal Service Setup
+```python
+from modalkit.model_service import ModalService, create_web_endpoints
+from modalkit.modal_config import ModalConfig
+
+modal_config = ModalConfig()
+app = modal.App(name=modal_config.app_name)
+
+@app.cls(**modal_config.get_app_cls_settings())
+class MyService(ModalService):
+    inference_implementation = MyModel
+    modal_utils: ModalConfig = modal_config
+```
+
+## Development Workflow
+
+### Setup
+```bash
+# Install with uv (recommended)
+uv sync
+uv run pre-commit install
+```
+
+### Testing
+```bash
+# Run all tests
+uv run pytest --cov --cov-config=pyproject.toml
+
+# Run specific tests
+uv run pytest tests/test_modal_service.py -v
+
+# TDD workflow - run after every change
+uv run pytest tests/test_specific.py::test_function -v
+```
+
+### Code Quality
+```bash
+# Run all checks (required before commit)
+uv run pre-commit run -a
+
+# Individual checks
+uv run ruff check modalkit/ tests/
+uv run ruff format modalkit/ tests/
+uv run mypy modalkit/
+```
+
+## Common Anti-Patterns to Avoid
+
+### ❌ Don't Do
+- Skip writing tests ("I'll add them later")
+- Use `make` commands (use direct `uv` commands instead)
+- Add comments unless specifically requested
+- Use relative imports within modalkit package
+- Hardcode paths - use configuration or environment variables
+- Write to mounted cloud buckets - use read-only mounts
+- Ignore type hints or use `Any` without justification
+
+### ✅ Do Instead
+- Write tests first, then implementation
+- Use `uv run pytest` and other direct uv commands
+- Write self-documenting code with clear variable names
+- Use absolute imports: `from modalkit.settings import Settings`
+- Use Pydantic models for configuration
+- Mount cloud buckets as read-only for model artifacts
+- Provide proper type annotations
+
+## Modal-Specific Guidelines
+
+### Container Configuration
+- Use specific image tags, not `latest` in production
+- Set appropriate memory/CPU when not using GPU
+- Configure container idle timeout based on usage patterns
+- Use environment variables for configuration, not hardcoded values
+
+### Volume Management
+- Initialize volumes in Modal deployment config
+- Use volume reload hooks in InferencePipeline for model updates
+- Handle volume reload errors gracefully
+- Cache frequently accessed files locally
+
+### Cloud Storage Integration
+- Support S3, GCS, and R2 through CloudBucketMount
+- Use proper secret management for credentials
+- Mount with appropriate read/write permissions
+- Use key prefixes to limit access scope
+
+## Documentation Standards
+
+### Code Documentation
+- Use docstrings for all public methods and classes
+- Include type hints and parameter descriptions
+- Provide usage examples in docstrings
+- Document complex algorithms and business logic
+
+### Example Documentation
+- Include complete, runnable examples
+- Use realistic ML scenarios (sentiment analysis, LLM deployment, etc.)
+- Show both basic and advanced usage patterns
+- Include troubleshooting sections
+
+## Error Handling Patterns
+
+### Exception Hierarchy
+```python
+from modalkit.exceptions import ModalKitError
+
+# Use custom exceptions for domain-specific errors
+raise ModalKitError("Descriptive error message with context")
+```
+
+### Async Error Handling
+- Send errors to failure queues for async requests
+- Include original request metadata in error responses
+- Log errors with request context for debugging
+- Don't let queue send failures prevent processing
+
+## Performance Considerations
+
+### Batch Processing
+- Use intelligent batching for GPU efficiency
+- Configure `max_batch_size` based on model memory requirements
+- Set appropriate `wait_ms` for latency vs throughput balance
+- Handle variable batch sizes gracefully
+
+### Resource Optimization
+- Use appropriate GPU types for workload
+- Configure concurrency based on model requirements
+- Cache model artifacts and frequently accessed data
+- Monitor container resource usage
+
+Remember: Modalkit aims to provide a production-ready ML platform on top of Modal. Always prioritize user experience, type safety, and maintainable code architecture.

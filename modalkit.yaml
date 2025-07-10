@@ -1,0 +1,34 @@
+app_settings:
+  app_prefix: "my-ml-service"
+  # Removed auth_config - using Modal proxy auth only
+  build_config:
+    image: "python:3.11-slim"
+    tag: "latest"
+    env:
+      MODEL_VERSION: "1.0"
+      LOG_LEVEL: "INFO"
+  deployment_config:
+    gpu: "T4"  # Options: T4, A10G, A100, H100, or null for CPU
+    concurrency_limit: 10
+    container_idle_timeout: 300
+    secure: true  # Always use Modal proxy auth
+    volumes: {}
+    # Example cloud storage mount:
+    # cloud_bucket_mounts:
+    #   - mount_point: "/mnt/models"
+    #     bucket_name: "my-model-bucket"
+    #     secret: "aws-credentials"
+    #     read_only: true
+  batch_config:
+    max_batch_size: 32
+    wait_ms: 100
+
+model_settings:
+  local_model_repository_folder: "./models"
+  common:
+    device: "cuda"
+    cache_dir: "./cache"
+  model_entries:
+    my_model:
+      model_path: "models/my_model.pt"
+      batch_size: 16
