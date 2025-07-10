@@ -1,0 +1,49 @@
+app_settings:
+  app_prefix: "test-app"
+  auth_config:
+    # Option 1: Use AWS SSM for API key (requires AWS credentials and boto3)
+    ssm_key: "/test/api-key"
+    # Option 2: Use hardcoded API key (alternative to SSM - comment out ssm_key above and uncomment below)
+    # api_key: "your-hardcoded-api-key-here"
+    auth_header: "x-api-key"
+  build_config:
+    image: "test.ecr.aws/test-image"
+    tag: "latest"
+    extra_run_commands: "pip install test-package"
+    env:
+      TEST_ENV: "value"
+  deployment_config:
+    gpu: "T4"
+    mounts:
+      - local_path: "test/local"
+        remote_path: "/test/remote"
+    secrets:
+      - "test-secret"
+    concurrency_limit: 5
+    allow_concurrent_inputs: 2
+    container_idle_timeout: 300
+    retries: 1
+    volumes:
+      "/mnt/test": "test-volume"
+    secure: false  # Set to true to enable Modal proxy authentication
+    cloud_bucket_mounts:
+      - mount_point: "/mnt/s3-bucket"
+        bucket_name: "my-s3-bucket"
+        secret: "aws-credentials"
+        read_only: true
+      # - mount_point: "/mnt/gcs-bucket"  # Google Cloud Storage example
+      #   bucket_name: "my-gcs-bucket"
+      #   bucket_endpoint_url: "https://storage.googleapis.com"
+      #   secret: "gcp-credentials"
+  batch_config:
+    max_batch_size: 1
+    wait_ms: 0
+
+model_settings:
+  local_model_repository_folder: "./models"
+  common:
+    cache_dir: "./cache"
+  model_entries:
+    test_model:
+      param1: "value1"
+      param2: "value2"
