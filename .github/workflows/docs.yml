@@ -97,7 +97,7 @@ jobs:
           if grep -r "TODO\|FIXME\|XXX" docs/ --exclude-dir=.git || true; then
             echo "⚠️  Found TODO/FIXME items in documentation"
           fi
-          
+
           # Check for missing images
           if find docs/ -name "*.md" -exec grep -l "!\[.*\](" {} \; | while read file; do
             grep -o "!\[.*\]([^)]*)" "$file" | sed 's/.*(\([^)]*\)).*/\1/' | while read img; do
