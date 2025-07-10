@@ -1,25 +1,39 @@
 app_settings:
-  app_prefix: "test-app"
+  app_prefix: "my-ml-service"
   auth_config:
-    ssm_key: "/test/api-key"
+    # Option 1: Use AWS SSM for API key (recommended)
+    ssm_key: "/my-service/api-key"
+    # Option 2: Use hardcoded API key (comment out ssm_key above)
+    # api_key: "your-secret-api-key-here"
     auth_header: "x-api-key"
   build_config:
-    image: "test.ecr.aws/test-image"
+    image: "python:3.11-slim"
     tag: "latest"
+    env:
+      MODEL_VERSION: "1.0"
+      LOG_LEVEL: "INFO"
   deployment_config:
-    gpu: null
-    concurrency_limit: 1
+    gpu: "T4"  # Options: T4, A10G, A100, H100, or null for CPU
+    concurrency_limit: 10
     container_idle_timeout: 300
-    secure: false
+    secure: false  # Set to true for Modal proxy auth
     volumes: {}
+    # Example cloud storage mount:
+    # cloud_bucket_mounts:
+    #   - mount_point: "/mnt/models"
+    #     bucket_name: "my-model-bucket"
+    #     secret: "aws-credentials"
+    #     read_only: true
   batch_config:
-    max_batch_size: 1
-    wait_ms: 0
+    max_batch_size: 32
+    wait_ms: 100
 
 model_settings:
   local_model_repository_folder: "./models"
   common:
+    device: "cuda"
     cache_dir: "./cache"
   model_entries:
-    test_model:
-      param1: "value1"
+    my_model:
+      model_path: "models/my_model.pt"
+      batch_size: 16

@@ -25,10 +25,10 @@ def set_env_vars():
 def test_load_settings(set_config_path):
     settings = Settings()
 
-    # Test that the settings are loaded correctly
-    assert settings.app_settings.app_prefix == "test-app"
-    assert settings.app_settings.auth_config.ssm_key == "/test/api-key"
-    assert settings.app_settings.build_config.image == "test.ecr.aws/test-image"
+    # Test that the settings are loaded correctly from the realistic example config
+    assert settings.app_settings.app_prefix == "my-ml-service"
+    assert settings.app_settings.auth_config.ssm_key == "/my-service/api-key"
+    assert settings.app_settings.build_config.image == "python:3.11-slim"
 
 
 def test_change_settings_file_location(monkeypatch, tmp_path):
