@@ -1,4 +1,4 @@
-# Modalkit 🎁
+# Modalkit
 
 <p align="center">
   <a href="https://img.shields.io/github/v/release/prassanna-ravishankar/modalkit">
