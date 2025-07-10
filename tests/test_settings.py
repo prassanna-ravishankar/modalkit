@@ -8,14 +8,14 @@ from modalkit.settings import CloudBucketMount, Settings
 
 @pytest.fixture
 def set_config_path():
-    os.environ["MODALKIT_CONFIG"] = "deployments/modalkit.yaml"
+    os.environ["MODALKIT_CONFIG"] = "modalkit.yaml"
     yield
     del os.environ["MODALKIT_CONFIG"]
 
 
 @pytest.fixture
 def set_env_vars():
-    os.environ["MODALKIT_CONFIG"] = "deployments/modalkit.yaml"
+    os.environ["MODALKIT_CONFIG"] = "modalkit.yaml"
     os.environ["MODALKIT_APP_SETTINGS__APP_PREFIX"] = "test_prefix"
     yield
     del os.environ["MODALKIT_CONFIG"]

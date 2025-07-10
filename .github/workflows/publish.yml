@@ -1,0 +1,120 @@
+name: Publish to PyPI
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      test_pypi:
+        description: 'Publish to TestPyPI instead of PyPI'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+  id-token: write  # Required for trusted publishing
+
+jobs:
+  build:
+    name: Build Distribution
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Fetch full history for proper versioning
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "latest"
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Build package
+        run: |
+          # Clean any previous builds
+          rm -rf dist/
+          
+          # Build wheel and sdist
+          uv build
+          
+          # Verify the build
+          ls -la dist/
+
+      - name: Verify package
+        run: |
+          # Install and test the built package
+          uv pip install dist/*.whl
+          uv run python -c "import modalkit; print(f'Modalkit version: {modalkit.__version__}')"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish-testpypi:
+    name: Publish to TestPyPI
+    if: github.event.inputs.test_pypi == 'true' || (github.event_name == 'release' && github.event.release.prerelease)
+    needs: build
+    runs-on: ubuntu-latest
+    environment: testpypi
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Publish to TestPyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          verbose: true
+
+  publish-pypi:
+    name: Publish to PyPI
+    if: github.event_name == 'release' && !github.event.release.prerelease && github.event.inputs.test_pypi != 'true'
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          verbose: true
+
+  github-release:
+    name: Upload to GitHub Release
+    if: github.event_name == 'release'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Upload to GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Upload all built files to the GitHub release
+          gh release upload ${{ github.event.release.tag_name }} dist/*

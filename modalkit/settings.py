@@ -222,7 +222,7 @@ class Settings(YamlBaseSettings):
 
     Configuration is loaded from:
         - Environment variables with MODALKIT_ prefix
-        - deployments/modalkit.yaml file. This location can
+        - modalkit.yaml file. This location can
             be overridden by the
             MODALKIT_CONFIG environment variable.
         - .env file
@@ -230,7 +230,7 @@ class Settings(YamlBaseSettings):
 
     model_config = SettingsConfigDict(
         env_file=".env",
-        yaml_file="deployments/modalkit.yaml",
+        yaml_file="modalkit.yaml",
         env_prefix="MODALKIT_",
         env_nested_delimiter="__",
         protected_namespaces=("settings_",),
@@ -248,7 +248,7 @@ class Settings(YamlBaseSettings):
         dotenv_settings: PydanticBaseSettingsSource,
         file_secret_settings: PydanticBaseSettingsSource,
     ) -> tuple[PydanticBaseSettingsSource, ...]:
-        yaml_files = os.getenv("MODALKIT_CONFIG", "deployments/modalkit.yaml").split(",")
+        yaml_files = os.getenv("MODALKIT_CONFIG", "modalkit.yaml").split(",")
         yaml_settings = [YamlConfigSettingsSource(settings_cls, yaml_file=yaml_file) for yaml_file in yaml_files]
         yaml_settings.reverse()
         return (

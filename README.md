@@ -342,7 +342,7 @@ model_settings:      # Model-specific settings
 Set configuration file location:
 ```bash
 # Default location
-export MODALKIT_CONFIG="deployments/modalkit.yaml"
+export MODALKIT_CONFIG="modalkit.yaml"
 
 # Multiple configs (later files override earlier ones)
 export MODALKIT_CONFIG="base.yaml,prod.yaml"
