@@ -1,6 +1,6 @@
 site_name: modalkit
 repo_url: https://github.com/prassanna-ravishankar/modalkit
-site_url: https://prassanna-ravishankar.github.io/modalkit
+site_url: https://prassanna.io/modalkit
 site_description: A library to package, ship and deploy your ML app on Modal
 site_author: Prassanna Ravishankar and Ludovic Vannoorenberghe
 edit_uri: edit/main/docs/
@@ -14,8 +14,13 @@ nav:
     - Configuration: guide/configuration.md
     - Deployment: guide/deployment.md
   - Examples:
-    - Basic Usage: examples/basic.md
+    - Overview: examples/README.md
+    - Sentiment Analysis: examples/basic.md
     - Async Processing: examples/async.md
+    - LLM Deployment: examples/llm-deployment.md
+    - Computer Vision: examples/computer-vision.md
+    - Multimodal AI: examples/multimodal-ai.md
+    - Real-time Analytics: examples/realtime-analytics.md
     - Error Handling: examples/error-handling.md
   - API Reference: modules.md
 plugins:
@@ -26,25 +31,38 @@ plugins:
           paths: [modalkit]
 theme:
   name: material
-  feature:
-    tabs: true
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.expand
+    - navigation.path
+    - navigation.top
+    - search.highlight
+    - search.share
+    - toc.follow
+    - content.code.copy
+    - content.action.edit
+    - content.action.view
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
-      primary: white
+      primary: blue grey
       accent: deep orange
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
-      primary: black
+      primary: blue grey
       accent: deep orange
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
   icon:
     repo: fontawesome/brands/github
+  logo: modalkit.png
+  favicon: modalkit.png
 
 extra:
   social:
@@ -58,3 +76,23 @@ markdown_extensions:
       permalink: true
   - pymdownx.arithmatex:
       generic: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.details
+  - admonition
+  - attr_list
+  - md_in_html
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg

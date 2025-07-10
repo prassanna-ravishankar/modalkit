@@ -231,7 +231,7 @@ deployment_config:
 
 ## 🤝 Contributing
 
-Want to add your own example? See our [Contributing Guidelines](../CONTRIBUTING.md) for:
+Want to add your own example? See our [Contributing Guidelines](https://github.com/prassanna-ravishankar/modalkit/blob/main/CONTRIBUTING.md) for:
 
 - Example requirements and standards
 - Code quality expectations
