@@ -31,6 +31,8 @@ dependencies = [
     "boto3-stubs>=1.35.74",
     "httpx>=0.28.1",
     "taskiq>=0.11.0",
+    "httpcore>=1.0.9",
+    "jinja2>=3.1.6",
 ]
 
 [project.urls]
