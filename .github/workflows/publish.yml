@@ -42,10 +42,10 @@ jobs:
         run: |
           # Clean any previous builds
           rm -rf dist/
-          
+
           # Build wheel and sdist
           uv build
-          
+
           # Verify the build
           ls -la dist/
 

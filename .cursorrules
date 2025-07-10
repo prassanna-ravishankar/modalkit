@@ -7,7 +7,7 @@ Modalkit is a Python framework that sits on top of Modal (modal.com) to provide 
 
 ### Key Components
 - **InferencePipeline**: Base class for ML model implementations (preprocess → predict → postprocess)
-- **ModalService**: Modal app orchestration and lifecycle management  
+- **ModalService**: Modal app orchestration and lifecycle management
 - **ModalConfig**: Configuration translation and Modal resource management
 - **FastAPI Integration**: Automatic API endpoint generation
 - **Configuration System**: YAML-based deployment settings with Pydantic validation
@@ -121,11 +121,11 @@ class MyModel(InferencePipeline):
     def preprocess(self, input_list: list[BaseModel]) -> dict:
         # Clean and prepare inputs
         return {"processed_data": ...}
-    
+
     def predict(self, input_list: list[BaseModel], preprocessed_data: dict) -> dict:
         # Run model inference
         return {"predictions": ...}
-    
+
     def postprocess(self, input_list: list[BaseModel], raw_output: dict) -> list[InferenceOutputModel]:
         # Format outputs
         return [MyOutput(...) for ... in raw_output["predictions"]]
@@ -159,7 +159,7 @@ uv run pre-commit install
 # Run all tests
 uv run pytest --cov --cov-config=pyproject.toml
 
-# Run specific tests  
+# Run specific tests
 uv run pytest tests/test_modal_service.py -v
 
 # TDD workflow - run after every change
@@ -173,7 +173,7 @@ uv run pre-commit run -a
 
 # Individual checks
 uv run ruff check modalkit/ tests/
-uv run ruff format modalkit/ tests/  
+uv run ruff format modalkit/ tests/
 uv run mypy modalkit/
 ```
 
