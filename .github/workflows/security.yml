@@ -38,7 +38,7 @@ jobs:
           uv run bandit -r modalkit/ -f json -o bandit-report.json || true
 
       - name: Upload bandit results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         if: always()
         with:
           name: bandit-results
