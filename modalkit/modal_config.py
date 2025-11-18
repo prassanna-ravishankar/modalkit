@@ -138,8 +138,6 @@ class ModalConfig:
         """
         return os.getenv("MODALKIT_APP_POSTFIX", "-dev")
 
-    # Removed CustomAPIKey property - using Modal proxy auth only
-
     @property
     def region(self) -> str | None:
         """
@@ -188,7 +186,7 @@ class ModalConfig:
 
         # Add local mounts using Modal 1.0 API (add files/directories to image)
         for mnt in self.app_settings.deployment_config.mounts:
-            if mnt.type == MountType.file:
+            if mnt.type == MountType.FILE:
                 image = image.add_local_file(mnt.local_path, mnt.remote_path)
             else:
                 image = image.add_local_dir(mnt.local_path, remote_path=mnt.remote_path)

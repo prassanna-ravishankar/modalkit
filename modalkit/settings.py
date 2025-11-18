@@ -3,16 +3,14 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, PydanticBaseSettingsSource, SettingsConfigDict, YamlConfigSettingsSource
-from pydantic_settings_yaml import YamlBaseSettings
-
-# Removed AuthConfigError import - no longer needed without auth module
+from pydantic_settings_yaml import YamlBaseSettings  # type: ignore[import-untyped]
 
 
 class MountType(str, Enum):
-    file = "file"
-    dir = "dir"
+    FILE = "file"
+    DIR = "dir"
 
 
 class Mount(BaseModel):
@@ -26,7 +24,7 @@ class Mount(BaseModel):
 
     local_path: str
     remote_path: str
-    type: MountType = MountType.file
+    type: MountType = MountType.FILE
 
 
 class Volume(BaseModel):
@@ -74,7 +72,8 @@ class DeploymentConfig(BaseModel):
     Attributes:
         gpu (Optional[str, list[str]]): GPU configuration for the deployment
         volumes (Optional[dict[str, str]]): Volume configuration for the deployment
-        volume_reload_interval_seconds (Optional[int]): Time interval in seconds after which volumes should be reloaded (None means no auto-reload)
+        volume_reload_interval_seconds (Optional[int]): Time interval in seconds after which
+            volumes should be reloaded (None means no auto-reload)
         concurrency_limit (Optional[int]): Concurrency limit for the deployment
         retries (int): Number of retries for the deployment
         secrets (list[str]): List of secrets for the deployment
@@ -92,13 +91,13 @@ class DeploymentConfig(BaseModel):
     volume_reload_interval_seconds: int | None = -1
     concurrency_limit: int | None = None
     retries: int = 1
-    secrets: list[str] = []
-    mounts: list[Mount] = []
+    secrets: list[str] = Field(default_factory=list)
+    mounts: list[Mount] = Field(default_factory=list)
     container_idle_timeout: int = 180
     allow_concurrent_inputs: int = 1
     allow_concurrent_inputs_handler: int = 10
     secure: bool = False
-    cloud_bucket_mounts: list[CloudBucketMount] = []
+    cloud_bucket_mounts: list[CloudBucketMount] = Field(default_factory=list)
 
 
 class BatchConfig(BaseModel):
@@ -144,11 +143,8 @@ class BuildConfig(BaseModel):
     image: str
     tag: str
     workdir: str = "/root"
-    env: dict[str, str] = {}
-    extra_run_commands: str | list[str] = []
-
-
-# Removed AuthConfig class - using Modal proxy auth only
+    env: dict[str, str] = Field(default_factory=dict)
+    extra_run_commands: str | list[str] = Field(default_factory=list)
 
 
 class AppSettings(BaseModel):
@@ -185,7 +181,7 @@ class ModelSettings(BaseModel):
     common: dict[str, Any]
 
 
-class Settings(YamlBaseSettings):
+class Settings(YamlBaseSettings):  # type: ignore[no-any-unimported]
     """
     Main configuration settings for Modalkit applications.
 

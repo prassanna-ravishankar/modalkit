@@ -62,7 +62,7 @@ class InferencePipeline:
         return result
 
     @abstractmethod
-    def preprocess(self, input_list: list[BaseModel]) -> dict:
+    def preprocess(self, input_list: list[BaseModel]) -> dict[str, Any]:
         """
         Prepares the input data for the model.
 
@@ -70,32 +70,32 @@ class InferencePipeline:
             input_list (list[BaseModel]): The list of input data to be preprocessed.
 
         Returns:
-            dict: The preprocessed data.
+            dict[str, Any]: The preprocessed data.
         """
         pass
 
     @abstractmethod
-    def predict(self, input_list: list[BaseModel], preprocessed_data: dict) -> dict:
+    def predict(self, input_list: list[BaseModel], preprocessed_data: dict[str, Any]) -> dict[str, Any]:
         """
         Performs the prediction using the model.
 
         Args:
             input_list (list[BaseModel]): The list of original input data.
-            preprocessed_data (dict): The preprocessed data.
+            preprocessed_data (dict[str, Any]): The preprocessed data.
 
         Returns:
-            Any: The raw output from the model.
+            dict[str, Any]: The raw output from the model.
         """
         pass
 
     @abstractmethod
-    def postprocess(self, input_list: list[BaseModel], raw_output: dict) -> list[InferenceOutputModel]:
+    def postprocess(self, input_list: list[BaseModel], raw_output: dict[str, Any]) -> list[InferenceOutputModel]:
         """
         Processes the raw output from the model into usable results.
 
         Args:
             input_list (list[BaseModel]): The list of original input data.
-            raw_output (dict): The raw output from the model.
+            raw_output (dict[str, Any]): The raw output from the model.
 
         Returns:
             list[InferenceOutputModel]: The list of final processed results.
