@@ -20,54 +20,47 @@
 </p>
 
 <p align="center">
-  A powerful Python framework for deploying ML models on Modal with production-ready features
+  Python framework for deploying ML models on Modal
 </p>
 
-## 🎯 What Modalkit Offers Over Raw Modal
+## What Modalkit Provides
 
-While Modal provides excellent serverless infrastructure, Modalkit adds a complete ML deployment framework:
+Modalkit adds ML deployment patterns on top of Modal's serverless infrastructure:
 
-### 🏗️ **Standardized ML Architecture**
-- **Structured Inference Pipeline**: Enforced `preprocess()` → `predict()` → `postprocess()` pattern
-- **Consistent API Endpoints**: `/predict_sync`, `/predict_batch`, `/predict_async` across all deployments
-- **Type-Safe Interfaces**: Pydantic models ensure data validation at API boundaries
+### Standardized ML Architecture
+- Enforced `preprocess()` → `predict()` → `postprocess()` pattern
+- Consistent API endpoints: `/predict_sync`, `/predict_batch`, `/predict_async`
+- Pydantic models for data validation
 
-### ⚙️ **Configuration-Driven Deployments**
-- **YAML Configuration**: Version-controlled deployment settings instead of scattered code
-- **Environment Management**: Easy dev/staging/prod configs with override capabilities
-- **Reproducible Builds**: Declarative infrastructure removes deployment inconsistencies
+### Configuration-Driven Deployments
+- YAML configuration for deployment settings
+- Environment-specific configs with override capabilities
+- Declarative infrastructure definitions
 
-### 👥 **Team-Friendly Workflows**
-- **Shared Standards**: All team members deploy models the same way
-- **Code Separation**: Model logic decoupled from Modal deployment boilerplate
-- **Collaboration**: Config files in git enable infrastructure review and collaboration
+### Production Features
+- Authentication middleware (API key or Modal proxy auth)
+- Async processing with multiple queue backend support
+- Direct S3/GCS/R2 bucket mounting
+- Request batching for GPU efficiency
+- Error handling and logging
 
-### 🚀 **Production Features Out-of-the-Box**
-- **Authentication Middleware**: Built-in API key or Modal proxy auth
-- **Queue Integration**: Async processing with multiple backend support
-- **Cloud Storage**: Direct S3/GCS/R2 mounting without manual setup
-- **Batch Processing**: Intelligent request batching for GPU efficiency
-- **Error Handling**: Comprehensive error responses and logging
+### Developer Tools
+- Pre-configured with ruff, mypy, pre-commit hooks
+- Testing patterns for ML deployments
+- Reduced boilerplate compared to raw Modal
 
-### 💡 **Developer Experience**
-- **Less Boilerplate**: Focus on model code, not FastAPI/Modal setup
-- **Modern Tooling**: Pre-configured with ruff, mypy, pre-commit hooks
-- **Testing Framework**: Built-in patterns for testing ML deployments
+## Features
 
-**In short**: Modalkit transforms Modal from infrastructure primitives into a complete ML platform, letting teams deploy models consistently while maintaining Modal's performance and scalability.
+- Modal integration for serverless deployment
+- Authentication: Modal proxy auth or custom API keys with AWS SSM
+- Cloud storage: S3, GCS, and R2 bucket mounting
+- Queue integration: Optional TaskIQ, SQS, or custom queue backends
+- Batch inference with configurable batch sizes
+- Type safety with Pydantic models
+- Pre-configured tooling: ruff, mypy, pre-commit
+- Error handling and logging
 
-## ✨ Key Features
-
-- 🚀 **Native Modal Integration**: Seamless deployment on Modal's serverless infrastructure
-- 🔐 **Flexible Authentication**: Modal proxy auth or custom API keys with AWS SSM support
-- ☁️ **Cloud Storage Support**: Direct mounting of S3, GCS, and R2 buckets
-- 🔄 **Flexible Queue Integration**: Optional queue backends with dependency injection - use TaskIQ, SQS, or any custom queue system
-- 📦 **Batch Inference**: Efficient batch processing with configurable batch sizes
-- 🎯 **Type Safety**: Full Pydantic integration for request/response validation
-- 🛠️ **Developer Friendly**: Pre-configured with modern Python tooling (ruff, pre-commit)
-- 📊 **Production Ready**: Comprehensive error handling and logging
-
-## 🚀 Quick Start
+## Quick Start
 
 ### Installation
 
@@ -82,13 +75,11 @@ uv pip install modalkit
 pip install git+https://github.com/prassanna-ravishankar/modalkit.git
 ```
 
-### 📚 Complete Examples
+### Complete Examples
 
-Working examples are available in the documentation:
-- **[Queue Backend Patterns](https://prassanna.io/modalkit/examples/queue-patterns/)** - Queue backend patterns and dependency injection
-- **[TaskIQ Integration](https://prassanna.io/modalkit/examples/taskiq-integration/)** - Full TaskIQ integration tutorial
-
-Follow the step-by-step tutorials to build complete working examples with your own ML models.
+See the documentation for working examples:
+- [Queue Backend Patterns](https://prassanna-ravishankar.github.io/modalkit/examples/queue-patterns/) - Queue backend patterns and dependency injection
+- [TaskIQ Integration](https://prassanna-ravishankar.github.io/modalkit/examples/taskiq-integration/) - TaskIQ integration tutorial
 
 ### 1. Define Your Model
 
@@ -167,7 +158,7 @@ def web_endpoints():
     )
 ```
 
-> 💡 **Queue backends are optional** - your service works perfectly without any queue configuration. Add TaskIQ or custom queues when you need async processing. See the [documentation examples](https://prassanna.io/modalkit/examples/) for working implementations.
+**Note**: Queue backends are optional. Services work without queue configuration. Add TaskIQ or custom queues for async processing. See [documentation examples](https://prassanna-ravishankar.github.io/modalkit/examples/) for implementations.
 
 ### 3. Configure Your Deployment
 
@@ -286,9 +277,9 @@ print(response.json())
 # [{"translated_text": "HELLO", "confidence": 0.95}, {"translated_text": "WORLD", "confidence": 0.95}]
 ```
 
-## 🔐 Authentication
+## Authentication
 
-Modalkit provides flexible authentication options:
+Modalkit supports multiple authentication options:
 
 ### Option 1: Custom API Key (Default)
 Configure with `secure: false` in your deployment config.
@@ -330,9 +321,9 @@ headers = {
 response = requests.post(url, json=data, headers=headers)
 ```
 
-> 💡 **Tip**: Modal proxy auth is recommended for production as it's managed by Modal and requires no additional setup.
+**Note**: Modal proxy auth is recommended for production as it's managed by Modal and requires no additional setup.
 
-## ⚙️ Configuration
+## Configuration
 
 ### Configuration Structure
 
@@ -394,9 +385,9 @@ deployment_config:
       type: "file"
 ```
 
-## ☁️ Cloud Storage Integration
+## Cloud Storage Integration
 
-Modalkit seamlessly integrates with cloud storage providers through Modal's CloudBucketMount:
+Modalkit integrates with cloud storage providers through Modal's CloudBucketMount:
 
 ### Supported Providers
 
@@ -478,21 +469,21 @@ class MyInference(InferencePipeline):
 
 ### Best Practices
 
-- ✅ Use read-only mounts for model artifacts
-- ✅ Mount only required prefixes with `key_prefix`
-- ✅ Use separate buckets for models vs. data
-- ✅ Cache frequently accessed files locally
-- ❌ Avoid writing logs to mounted buckets
-- ❌ Don't mount entire buckets if you only need specific files
+- Use read-only mounts for model artifacts
+- Mount only required prefixes with `key_prefix`
+- Use separate buckets for models vs. data
+- Cache frequently accessed files locally
+- Avoid writing logs to mounted buckets
+- Don't mount entire buckets if you only need specific files
 
-## 🚀 Advanced Features
+## Advanced Features
 
-### Flexible Queue Processing
+### Queue Processing
 
-Modalkit offers **optional** queue processing with multiple approaches:
+Queue processing is optional and supports multiple backends:
 
 #### 1. No Queues (Default)
-Perfect for sync-only APIs:
+For sync-only APIs:
 ```python
 class MyService(ModalService):
     inference_implementation = MyModel
@@ -544,8 +535,8 @@ service = MyService(queue_backend=MyCustomQueue())
 
 #### Working Examples
 See complete tutorials in the documentation:
-- **[Queue Backend Patterns](https://prassanna.io/modalkit/examples/queue-patterns/)** - Queue backend patterns
-- **[TaskIQ Integration](https://prassanna.io/modalkit/examples/taskiq-integration/)** - Full TaskIQ integration
+- **[Queue Backend Patterns](https://prassanna-ravishankar.github.io/modalkit/examples/queue-patterns/)** - Queue backend patterns
+- **[TaskIQ Integration](https://prassanna-ravishankar.github.io/modalkit/examples/taskiq-integration/)** - Full TaskIQ integration
 
 ```python
 # Async endpoint usage
@@ -578,7 +569,7 @@ deployment_config:
   volume_reload_interval_seconds: 300  # Reload every 5 minutes
 ```
 
-## 🛠️ Development
+## Development
 
 ### Setup
 
@@ -623,7 +614,7 @@ uv run ruff format modalkit/ tests/
 uv run ruff check modalkit/ tests/
 ```
 
-## 📖 API Reference
+## API Reference
 
 ### Endpoints
 
@@ -644,26 +635,26 @@ def predict(self, input_list: List[InputModel], preprocessed_data: dict) -> dict
 def postprocess(self, input_list: List[InputModel], raw_output: dict) -> List[OutputModel]
 ```
 
-## 🤝 Contributing
+## Contributing
 
-We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
+See [Contributing Guidelines](CONTRIBUTING.md) for details.
 
 ### Development Workflow
 
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+2. Create a feature branch (`git checkout -b feature/your-feature`)
 3. Make your changes
 4. Run tests and linting (`uv run pytest && uv run pre-commit run -a`)
 5. Commit your changes (pre-commit hooks will run automatically)
 6. Push to your fork and open a Pull Request
 
-## 📝 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
-Built with ❤️ using:
+Built using:
 - [Modal](https://modal.com) - Serverless infrastructure for ML
 - [FastAPI](https://fastapi.tiangolo.com) - Modern web framework
 - [Pydantic](https://pydantic-docs.helpmanual.io) - Data validation
@@ -674,5 +665,5 @@ Built with ❤️ using:
 <p align="center">
   <a href="https://github.com/prassanna-ravishankar/modalkit/issues">Report Bug</a> •
   <a href="https://github.com/prassanna-ravishankar/modalkit/issues">Request Feature</a> •
-  <a href="https://prassanna.io/modalkit">Documentation</a>
+  <a href="https://prassanna-ravishankar.github.io/modalkit">Documentation</a>
 </p>
