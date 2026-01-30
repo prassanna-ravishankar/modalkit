@@ -85,8 +85,8 @@ pip install git+https://github.com/prassanna-ravishankar/modalkit.git
 ### 📚 Complete Examples
 
 Working examples are available in the documentation:
-- **[Queue Backend Patterns](https://prassanna-ravishankar.github.io/modalkit/examples/queue-patterns/)** - Queue backend patterns and dependency injection
-- **[TaskIQ Integration](https://prassanna-ravishankar.github.io/modalkit/examples/taskiq-integration/)** - Full TaskIQ integration tutorial
+- **[Queue Backend Patterns](https://prassanna.io/modalkit/examples/queue-patterns/)** - Queue backend patterns and dependency injection
+- **[TaskIQ Integration](https://prassanna.io/modalkit/examples/taskiq-integration/)** - Full TaskIQ integration tutorial
 
 Follow the step-by-step tutorials to build complete working examples with your own ML models.
 
@@ -167,7 +167,7 @@ def web_endpoints():
     )
 ```
 
-> 💡 **Queue backends are optional** - your service works perfectly without any queue configuration. Add TaskIQ or custom queues when you need async processing. See the [documentation examples](https://prassanna-ravishankar.github.io/modalkit/examples/) for working implementations.
+> 💡 **Queue backends are optional** - your service works perfectly without any queue configuration. Add TaskIQ or custom queues when you need async processing. See the [documentation examples](https://prassanna.io/modalkit/examples/) for working implementations.
 
 ### 3. Configure Your Deployment
 
@@ -544,8 +544,8 @@ service = MyService(queue_backend=MyCustomQueue())
 
 #### Working Examples
 See complete tutorials in the documentation:
-- **[Queue Backend Patterns](https://prassanna-ravishankar.github.io/modalkit/examples/queue-patterns/)** - Queue backend patterns
-- **[TaskIQ Integration](https://prassanna-ravishankar.github.io/modalkit/examples/taskiq-integration/)** - Full TaskIQ integration
+- **[Queue Backend Patterns](https://prassanna.io/modalkit/examples/queue-patterns/)** - Queue backend patterns
+- **[TaskIQ Integration](https://prassanna.io/modalkit/examples/taskiq-integration/)** - Full TaskIQ integration
 
 ```python
 # Async endpoint usage
@@ -674,5 +674,5 @@ Built with ❤️ using:
 <p align="center">
   <a href="https://github.com/prassanna-ravishankar/modalkit/issues">Report Bug</a> •
   <a href="https://github.com/prassanna-ravishankar/modalkit/issues">Request Feature</a> •
-  <a href="https://prassanna-ravishankar.github.io/modalkit">Documentation</a>
+  <a href="https://prassanna.io/modalkit">Documentation</a>
 </p>
