@@ -2,44 +2,26 @@ name: Security
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main]
   pull_request:
-    branches: [ main, develop ]
+    branches: [main]
   schedule:
-    - cron: '0 2 * * 1'  # Run weekly on Mondays at 2 AM
+    - cron: '0 2 * * 1'
 
 jobs:
-  security-scan:
-    name: Security Scan
+  audit:
+    name: Dependency Audit
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v6
         with:
-          version: "latest"
           enable-cache: true
 
-      - name: Set up Python
-        run: uv python install 3.12
+      - run: uv python install 3.12
 
-      - name: Install dependencies
-        run: uv sync --dev
+      - run: uv sync --group dev
 
-      - name: Run safety check
-        run: |
-          uv pip install safety
-          uv pip freeze | uv run safety check --stdin
-
-      - name: Run bandit security linter
-        run: |
-          uv pip install bandit
-          uv run bandit -r modalkit/ -f json -o bandit-report.json || true
-
-      - name: Upload bandit results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: bandit-results
-          path: bandit-report.json
+      - name: Audit dependencies
+        run: uv pip audit

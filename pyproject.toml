@@ -4,13 +4,12 @@ version = "0.1.0"
 description = "A library to package, ship and deploy your ML app"
 authors = [{ name = "Prassanna Ravishankar", email = "me@prassanna.io" }]
 readme = "README.md"
-keywords = ['python']
-requires-python = ">=3.9,<4.0"
+keywords = ["python", "modal", "ml", "deployment"]
+requires-python = ">=3.10"
 classifiers = [
     "Intended Audience :: Developers",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -36,92 +35,58 @@ dependencies = [
 [project.urls]
 Repository = "https://github.com/prassanna-ravishankar/modalkit"
 
-[tool.uv]
-dev-dependencies = [
+[dependency-groups]
+dev = [
     "pytest>=7.2.0",
     "pre-commit>=2.20.0",
-    "tox-uv>=1.11.3",
-    "mypy>=0.991",
     "pytest-cov>=4.0.0",
-    "ruff>=0.6.9",
+    "ruff>=0.9.0",
     "mkdocs>=1.4.2",
     "mkdocs-material>=8.5.10",
     "mkdocstrings[python]>=0.26.1",
     "pytest-asyncio>=0.24.0",
     "pytest-mock>=3.14.0",
 ]
-cache-keys = [{ git = { commit = true, tags = true } }]
-reinstall-package = ["modalkit"]
 
 [build-system]
-requires = ["setuptools >= 61.0"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
-
-[tool.setuptools]
+[tool.hatch.build.targets.wheel]
 packages = ["modalkit"]
-
-[tool.mypy]
-files = ["modalkit"]
-disallow_untyped_defs = true
-disallow_any_unimported = true
-no_implicit_optional = true
-check_untyped_defs = true
-warn_return_any = true
-warn_unused_ignores = true
-show_error_codes = true
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
 
 [tool.ruff]
-target-version = "py39"
+target-version = "py310"
 line-length = 120
 fix = true
 
 [tool.ruff.lint]
 select = [
-    # flake8-2020
-    "YTT",
-    # flake8-bandit
-    "S",
-    # flake8-bugbear
-    "B",
-    # flake8-builtins
-    "A",
-    # flake8-comprehensions
-    "C4",
-    # flake8-debugger
-    "T10",
-    # flake8-simplify
-    "SIM",
-    # isort
-    "I",
-    # mccabe
-    "C90",
-    # pycodestyle
-    "E", "W",
-    # pyflakes
-    "F",
-    # pygrep-hooks
-    "PGH",
-    # pyupgrade
-    "UP",
-    # ruff
-    "RUF",
-    # tryceratops
-    "TRY",
+    "YTT",  # flake8-2020
+    "S",    # flake8-bandit
+    "B",    # flake8-bugbear
+    "A",    # flake8-builtins
+    "C4",   # flake8-comprehensions
+    "T10",  # flake8-debugger
+    "SIM",  # flake8-simplify
+    "I",    # isort
+    "C90",  # mccabe
+    "E", "W",  # pycodestyle
+    "F",    # pyflakes
+    "PGH",  # pygrep-hooks
+    "UP",   # pyupgrade
+    "RUF",  # ruff
+    "TRY",  # tryceratops
 ]
 ignore = [
-    # LineTooLong
-    "E501",
-    # DoNotAssignLambda
-    "E731",
-    # Avoid specifying long messages outside the exception class
-    "TRY003",
-    # Use specific rule codes when ignoring type issues
-    "PGH003",
+    "E501",   # line too long
+    "E731",   # lambda assignment
+    "TRY003", # long messages outside exception class
+    "PGH003", # specific rule codes for type ignores
 ]
 
 [tool.ruff.lint.per-file-ignores]
