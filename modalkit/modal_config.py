@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any
 
 import modal
 from loguru import logger
@@ -16,7 +16,7 @@ class ModalConfig:
     Additionally, has some staticmethods that can be used without instantiating the class.
     """
 
-    def __init__(self, settings: Optional[Settings] = None):
+    def __init__(self, settings: Settings | None = None):
         if settings is None:
             self.settings = Settings()
         else:
@@ -79,14 +79,14 @@ class ModalConfig:
         return self._volumes
 
     @property
-    def all_volumes(self) -> dict[str, Union[modal.Volume, modal.CloudBucketMount]]:
+    def all_volumes(self) -> dict[str, modal.Volume | modal.CloudBucketMount]:
         """
         Gets all volume mounts including both regular volumes and cloud bucket mounts.
 
         Returns:
             dict: Combined dictionary of Modal volumes and CloudBucketMounts
         """
-        combined_volumes: dict[str, Union[modal.Volume, modal.CloudBucketMount]] = {}
+        combined_volumes: dict[str, modal.Volume | modal.CloudBucketMount] = {}
 
         # Add regular volumes
         for key, volume in self.volumes.items():
@@ -141,7 +141,7 @@ class ModalConfig:
     # Removed CustomAPIKey property - using Modal proxy auth only
 
     @property
-    def region(self) -> Optional[str]:
+    def region(self) -> str | None:
         """
         Gets the Modal deployment region.
 

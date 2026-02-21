@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from collections.abc import Awaitable
-from typing import Any, Callable, TypeVar
+from collections.abc import Awaitable, Callable
+from typing import Any, TypeVar
 
 from fastapi import APIRouter, Body, Depends, FastAPI
 from pydantic import BaseModel

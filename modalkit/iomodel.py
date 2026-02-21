@@ -1,4 +1,4 @@
-from typing import Generic, Optional, TypeVar
+from typing import Generic, TypeVar
 
 from pydantic import BaseModel, ConfigDict
 
@@ -70,7 +70,7 @@ class InferenceOutputModel(BaseModel):
 
     model_config = ConfigDict(extra="allow")
     status: str
-    error: Optional[str] = None
+    error: str | None = None
 
 
 class DelayedFailureOutputModel(InferenceOutputModel):

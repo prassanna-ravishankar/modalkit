@@ -230,7 +230,7 @@ class TestModalServiceRequestProcessing:
 
         results = loaded_service.process_request(batch_inputs)
 
-        for _i, (text, result) in enumerate(zip(texts, results)):
+        for _i, (text, result) in enumerate(zip(texts, results, strict=False)):
             assert f"Processed: {text}" in result.processed_text
 
     def test_service_processes_async_requests_with_queues(self, loaded_service):

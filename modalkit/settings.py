@@ -1,7 +1,7 @@
 import os
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any
 
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, PydanticBaseSettingsSource, SettingsConfigDict, YamlConfigSettingsSource
@@ -59,10 +59,10 @@ class CloudBucketMount(BaseModel):
 
     mount_point: str
     bucket_name: str
-    bucket_endpoint_url: Optional[str] = None
-    key_prefix: Optional[str] = None
-    secret: Optional[str] = None
-    oidc_auth_role_arn: Optional[str] = None
+    bucket_endpoint_url: str | None = None
+    key_prefix: str | None = None
+    secret: str | None = None
+    oidc_auth_role_arn: str | None = None
     read_only: bool = False
     requester_pays: bool = False
 
@@ -86,11 +86,11 @@ class DeploymentConfig(BaseModel):
         cloud_bucket_mounts (list[CloudBucketMount]): List of cloud bucket mounts for the deployment
     """
 
-    region: Optional[str] = None
-    gpu: Union[str, list[str], None] = None
-    volumes: Optional[dict[str, str]] = None
-    volume_reload_interval_seconds: Optional[int] = -1
-    concurrency_limit: Optional[int] = None
+    region: str | None = None
+    gpu: str | list[str] | None = None
+    volumes: dict[str, str] | None = None
+    volume_reload_interval_seconds: int | None = -1
+    concurrency_limit: int | None = None
     retries: int = 1
     secrets: list[str] = []
     mounts: list[Mount] = []
@@ -145,7 +145,7 @@ class BuildConfig(BaseModel):
     tag: str
     workdir: str = "/root"
     env: dict[str, str] = {}
-    extra_run_commands: Union[str, list[str]] = []
+    extra_run_commands: str | list[str] = []
 
 
 # Removed AuthConfig class - using Modal proxy auth only
