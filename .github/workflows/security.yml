@@ -24,4 +24,4 @@ jobs:
       - run: uv sync --group dev
 
       - name: Audit dependencies
-        run: uv pip audit
+        run: uvx pip-audit
