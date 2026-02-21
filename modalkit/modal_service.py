@@ -254,8 +254,7 @@ class ModalService:
         # Only append metadata for regular inference outputs, not DelayedFailureOutputModel
         # DelayedFailureOutputModel already contains the original message with its metadata
         if not isinstance(raw_output_data, DelayedFailureOutputModel):
-            # InferenceOutputModel allows extra fields - use setattr to avoid type checker issues
-            raw_output_data.meta = input_data.meta  # type: ignore[attr-defined]
+            raw_output_data.meta = input_data.meta
 
         if raw_output_data.status == "success":
             success_queue = input_data.success_queue

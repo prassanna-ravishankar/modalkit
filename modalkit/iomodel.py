@@ -71,6 +71,7 @@ class InferenceOutputModel(BaseModel):
     model_config = ConfigDict(extra="allow")
     status: str
     error: str | None = None
+    meta: dict = Field(default_factory=dict)
 
 
 class DelayedFailureOutputModel(InferenceOutputModel):
