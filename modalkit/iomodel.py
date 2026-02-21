@@ -1,6 +1,6 @@
 from typing import Generic, TypeVar
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 T = TypeVar("T", bound=BaseModel)
 
@@ -34,7 +34,7 @@ class AsyncInputModel(BaseModel, Generic[T]):
     message: T
     success_queue: str = ""
     failure_queue: str = ""
-    meta: dict = {}
+    meta: dict = Field(default_factory=dict)
 
 
 class SyncInputModel(BaseModel, Generic[T]):
@@ -71,6 +71,7 @@ class InferenceOutputModel(BaseModel):
     model_config = ConfigDict(extra="allow")
     status: str
     error: str | None = None
+    meta: dict = Field(default_factory=dict)
 
 
 class DelayedFailureOutputModel(InferenceOutputModel):

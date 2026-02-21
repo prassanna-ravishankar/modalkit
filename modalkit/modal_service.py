@@ -145,8 +145,10 @@ class ModalService:
 
         current_time = time.time()
         if current_time - self._last_reload_time >= self._reload_interval:
+            time_since_reload = current_time - self._last_reload_time
             logger.info(
-                f"Time since last reload {current_time - self._last_reload_time}s exceeded interval {self._reload_interval}s, reloading volumes"
+                f"Time since last reload {time_since_reload}s exceeded "
+                f"interval {self._reload_interval}s, reloading volumes"
             )
             self.modal_utils.reload_volumes()
             self._last_reload_time = current_time
@@ -252,15 +254,12 @@ class ModalService:
         # Only append metadata for regular inference outputs, not DelayedFailureOutputModel
         # DelayedFailureOutputModel already contains the original message with its metadata
         if not isinstance(raw_output_data, DelayedFailureOutputModel):
-            # InferenceOutputModel allows extra fields - use setattr to avoid type checker issues
             raw_output_data.meta = input_data.meta
 
         if raw_output_data.status == "success":
             success_queue = input_data.success_queue
             if success_queue:  # Only send if queue name is provided
                 # Use asyncio.create_task to avoid blocking the batch processing
-                import asyncio
-
                 try:
                     loop = asyncio.get_running_loop()
                     task = loop.create_task(
@@ -281,8 +280,6 @@ class ModalService:
             failure_queue = input_data.failure_queue
             if failure_queue:  # Only send if queue name is provided
                 # Use asyncio.create_task to avoid blocking the batch processing
-                import asyncio
-
                 try:
                     loop = asyncio.get_running_loop()
                     task = loop.create_task(self._send_to_queue(failure_queue, raw_output_data.model_dump_json()))
@@ -338,7 +335,7 @@ class ModalService:
             # In practice, this would need to be refactored to work with Modal's class instantiation
             service_instance = cls()
             service_instance.model_name = model_name
-            call = await service_instance.process_request.spawn.aio(input_list)
+            call = await service_instance.process_request.spawn.aio(input_list)  # type: ignore[call-arg, arg-type]
             return AsyncOutputModel(job_id=call.object_id)
 
         return fn
@@ -377,7 +374,7 @@ class ModalService:
             # Create a mock instance for remote calls - this is a limitation of the current design
             service_instance = cls()
             service_instance.model_name = model_name
-            results = await service_instance.process_request.remote.aio(input_list)
+            results = await service_instance.process_request.remote.aio(input_list)  # type: ignore[call-arg, arg-type]
             # Return the first (and only) result for sync calls
             return results[0]
 

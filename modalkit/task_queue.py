@@ -185,13 +185,10 @@ def send_response_queue(queue_name: str, queue_message: str) -> bool:
         logger.error(f"Failed to create backend: {e}")
         return False
 
-    # Use async event loop if available, otherwise create one
+    # Execute async send_message in event loop
+    # Note: This is a sync function that wraps async backend calls.
+    # If calling from async context, use the backend directly instead.
     try:
-        loop = asyncio.get_running_loop()
-        task = loop.create_task(backend.send_message(queue_name, queue_message))
-        result = loop.run_until_complete(task)
-    except RuntimeError:
-        # No running loop, create one
         result = asyncio.run(backend.send_message(queue_name, queue_message))
     except Exception as e:
         logger.error(f"Failed to send message to queue {queue_name}: {e}")

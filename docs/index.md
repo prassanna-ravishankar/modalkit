@@ -10,17 +10,17 @@
 
 ## What is Modalkit?
 
-Modalkit is a lightweight framework that sits on top of [Modal](https://modal.com) to provide ML-specific patterns and conveniences. Think of it as a set of best practices and utilities for deploying machine learning models on Modal's excellent serverless infrastructure.
+Modalkit is a lightweight framework built on [Modal](https://modal.com) that provides ML-specific patterns for deploying machine learning models on Modal's serverless infrastructure.
 
 ## Why use Modalkit?
 
-While Modal provides powerful primitives for serverless compute, Modalkit adds:
+Modalkit adds the following on top of Modal's serverless compute:
 
-- **🎯 ML-Specific Patterns**: Standardized inference pipeline (preprocess → predict → postprocess)
-- **🔧 Configuration Management**: YAML-based config for Modal deployments
-- **🔐 Built-in Auth**: Easy authentication setup for ML APIs
-- **📦 Type Safety**: Pydantic models for request/response validation
-- **🔄 Queue Integration**: Async inference with SQS/Taskiq support
+- **ML-Specific Patterns**: Standardized inference pipeline (preprocess → predict → postprocess)
+- **Configuration Management**: YAML-based config for Modal deployments
+- **Built-in Auth**: Authentication setup for ML APIs
+- **Type Safety**: Pydantic models for request/response validation
+- **Queue Integration**: Async inference with SQS/Taskiq support
 
 ## How it works
 
@@ -121,16 +121,16 @@ app_settings:
 
 ## When to use Modalkit
 
-✅ **Use Modalkit when you want:**
-- Quick ML model deployment on Modal
+**Use Modalkit for:**
+- ML model deployment on Modal
 - Standardized API patterns
 - Configuration-driven deployments
 - Built-in auth and validation
 
-❌ **Use Modal directly when you need:**
+**Use Modal directly for:**
 - Non-ML workloads
 - Custom networking requirements
-- Fine-grained control over containers
+- Fine-grained container control
 
 ## Learn More
 

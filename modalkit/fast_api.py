@@ -31,7 +31,8 @@ def create_app(
         router_dependency (Optional[Callable[..., Any]]): Optional dependency for router-level functionality.
                                                           If None, routes use only Modal proxy auth.
         sync_fn (Callable[[str, BaseModel], Awaitable[BaseModel]]): Synchronous predict function.
-        async_fn (Callable[[str, BaseModel], Awaitable[AsyncOutputModel]]): Asynchronous predict function, must return job_id
+        async_fn (Callable[[str, BaseModel], Awaitable[AsyncOutputModel]]): Asynchronous
+            predict function, must return job_id
 
     Returns:
         FastAPI: Configured FastAPI application with predict routes.

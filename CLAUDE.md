@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Modalkit is a Python framework that sits on top of Modal (modal.com) to provide ML-specific patterns and conveniences for deploying machine learning models. It transforms Modal from infrastructure primitives into a complete ML platform with standardized inference pipelines, configuration-driven deployments, and production-ready features.
+Modalkit is a Python framework built on Modal (modal.com) that provides ML-specific patterns for deploying machine learning models. It adds standardized inference pipelines, configuration-driven deployments, and production features on top of Modal's serverless infrastructure.
 
-**Key Value Proposition**: Modalkit offers standardized ML architecture, configuration-driven deployments, team-friendly workflows, and production features out-of-the-box compared to using raw Modal directly.
+**Purpose**: Provides standardized ML architecture, configuration management, and deployment patterns for Modal-based ML services.
 
 ## Development Commands
 
