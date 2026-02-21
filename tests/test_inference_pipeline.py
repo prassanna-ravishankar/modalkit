@@ -8,7 +8,6 @@ This module tests the core ML inference pipeline functionality, focusing on:
 - Hook method integration
 """
 
-from typing import Optional
 from unittest.mock import patch
 
 import pytest
@@ -91,7 +90,7 @@ class TextProcessingPipeline(InferencePipeline):
 class ErrorPronePipeline(InferencePipeline):
     """Pipeline that simulates errors in different stages"""
 
-    def __init__(self, error_stage: Optional[str] = None):
+    def __init__(self, error_stage: str | None = None):
         import tempfile
 
         super().__init__("error-model", tempfile.gettempdir(), {})

@@ -1,7 +1,6 @@
 import asyncio
 import time
-from collections.abc import Awaitable
-from typing import Callable, Optional, Union
+from collections.abc import Awaitable, Callable
 
 import modal
 import modal.experimental
@@ -95,9 +94,9 @@ class ModalService:
     model_name: str
     inference_implementation: type[InferencePipeline]
     modal_utils: ModalConfig
-    queue_backend: Optional[QueueBackend] = None
+    queue_backend: QueueBackend | None = None
 
-    def __init__(self, queue_backend: Optional[QueueBackend] = None):
+    def __init__(self, queue_backend: QueueBackend | None = None):
         """
         Initialize ModalService with optional queue backend.
 
@@ -163,7 +162,7 @@ class ModalService:
         max_batch_size=modal_utils.settings.app_settings.batch_config.max_batch_size,
         wait_ms=modal_utils.settings.app_settings.batch_config.wait_ms,
     )
-    def process_request(self, input_list: list[Union[SyncInputModel, AsyncInputModel]]) -> list[InferenceOutputModel]:
+    def process_request(self, input_list: list[SyncInputModel | AsyncInputModel]) -> list[InferenceOutputModel]:
         """
         Processes a batch of inference requests.
 
@@ -189,7 +188,7 @@ class ModalService:
             )
 
             # For any requests that were async, return the response to the appropriate queue
-            for message_idx, (input_data, raw_output_data) in enumerate(zip(input_list, raw_output_list)):
+            for message_idx, (input_data, raw_output_data) in enumerate(zip(input_list, raw_output_list, strict=False)):
                 if isinstance(input_data, AsyncInputModel):
                     self.send_async_response(message_idx, raw_output_data, input_data)
 
