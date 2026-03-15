@@ -19,17 +19,11 @@ classifiers = [
 dependencies = [
     "pydantic-settings-yaml>=0.2.0",
     "pydantic>=2",
-    "python-decouple>=3.8",
     "loguru>=0.7.0",
     "boto3>=1.35.71",
     "fastapi>=0.115.5",
     "modal>=0.67.2",
     "pydantic-settings>=2.6.1",
-    "cachetools>=5.5.0",
-    "httpx>=0.28.1",
-    "taskiq>=0.11.0",
-    "httpcore>=1.0.9",
-    "jinja2>=3.1.6",
 ]
 
 [project.urls]
@@ -46,6 +40,7 @@ dev = [
     "mkdocstrings[python]>=0.26.1",
     "pytest-asyncio>=0.24.0",
     "pytest-mock>=3.14.0",
+    "httpx>=0.28.1",
 ]
 
 [build-system]

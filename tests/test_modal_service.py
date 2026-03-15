@@ -36,14 +36,14 @@ from modalkit.settings import (
 )
 
 
-class TestRequest(BaseModel):
+class SampleRequest(BaseModel):
     """Test input model for service testing"""
 
     text: str
     priority: str = "normal"
 
 
-class TestResponse(InferenceOutputModel):
+class SampleResponse(InferenceOutputModel):
     """Test output model for service testing"""
 
     processed_text: str
@@ -90,7 +90,7 @@ class MockInferencePipeline(InferencePipeline):
 
         results = []
         for prediction in raw_output["predictions"]:
-            result = TestResponse(
+            result = SampleResponse(
                 status="success",
                 processed_text=prediction["processed_text"],
                 processing_time=prediction["processing_time"],
@@ -104,7 +104,7 @@ class MockInferencePipeline(InferencePipeline):
         self.reload_hook_called = True
 
 
-class TestModalService(ModalService):
+class SampleModalService(ModalService):
     """Test implementation of ModalService"""
 
     inference_implementation = MockInferencePipeline
@@ -141,7 +141,7 @@ class TestModalServiceLifecycle:
 
     def test_service_initializes_correctly(self, tmp_path):
         """ModalService should initialize with correct configuration"""
-        service = TestModalService("sentiment-model", tmp_path)
+        service = SampleModalService("sentiment-model", tmp_path)
 
         assert service.model_name == "sentiment-model"
         assert service.inference_implementation == MockInferencePipeline
@@ -155,14 +155,14 @@ class TestModalServiceLifecycle:
         custom_backend = InMemoryBackend()
 
         # Initialize service with injected backend
-        service = TestModalService("sentiment-model", tmp_path, queue_backend=custom_backend)
+        service = SampleModalService("sentiment-model", tmp_path, queue_backend=custom_backend)
 
         assert service.queue_backend is custom_backend
         assert service.model_name == "sentiment-model"
 
     def test_service_loads_artifacts_on_startup(self, tmp_path):
         """ModalService should load model artifacts during startup"""
-        service = TestModalService("text-classifier", tmp_path, processing_delay=0.1)
+        service = SampleModalService("text-classifier", tmp_path, processing_delay=0.1)
 
         # Simulate Modal's @modal.enter() behavior
         service.load_artefacts()
@@ -174,7 +174,7 @@ class TestModalServiceLifecycle:
 
     def test_service_configures_volume_reloading(self, tmp_path):
         """ModalService should configure volume reloading based on settings"""
-        service = TestModalService("model-with-volumes", tmp_path)
+        service = SampleModalService("model-with-volumes", tmp_path)
         service.modal_utils.settings.app_settings.deployment_config.volume_reload_interval_seconds = 300
 
         service.load_artefacts()
@@ -191,24 +191,24 @@ class TestModalServiceRequestProcessing:
     @pytest.fixture
     def loaded_service(self, tmp_path):
         """Provides a service with loaded artifacts"""
-        service = TestModalService("test-model", tmp_path)
+        service = SampleModalService("test-model", tmp_path)
         service.load_artefacts()
         return service
 
     def test_service_processes_single_sync_request(self, loaded_service):
         """ModalService should process single synchronous requests correctly"""
-        sync_input = SyncInputModel(message=TestRequest(text="Hello world"))
+        sync_input = SyncInputModel(message=SampleRequest(text="Hello world"))
 
         results = loaded_service.process_request([sync_input])
 
         assert len(results) == 1
-        assert isinstance(results[0], TestResponse)
+        assert isinstance(results[0], SampleResponse)
         assert results[0].status == "success"
         assert "Processed: Hello world" in results[0].processed_text
 
     def test_service_processes_batch_requests(self, loaded_service):
         """ModalService should handle batch processing efficiently"""
-        batch_inputs = [SyncInputModel(message=TestRequest(text=f"Request {i}")) for i in range(5)]
+        batch_inputs = [SyncInputModel(message=SampleRequest(text=f"Request {i}")) for i in range(5)]
 
         results = loaded_service.process_request(batch_inputs)
 
@@ -226,7 +226,7 @@ class TestModalServiceRequestProcessing:
     def test_service_preserves_request_order(self, loaded_service):
         """ModalService should preserve the order of requests in batch processing"""
         texts = ["First", "Second", "Third", "Fourth"]
-        batch_inputs = [SyncInputModel(message=TestRequest(text=text)) for text in texts]
+        batch_inputs = [SyncInputModel(message=SampleRequest(text=text)) for text in texts]
 
         results = loaded_service.process_request(batch_inputs)
 
@@ -236,7 +236,7 @@ class TestModalServiceRequestProcessing:
     def test_service_processes_async_requests_with_queues(self, loaded_service):
         """ModalService should handle async requests and send responses to queues"""
         async_input = AsyncInputModel(
-            message=TestRequest(text="Async request"),
+            message=SampleRequest(text="Async request"),
             success_queue="success-topic",
             failure_queue="failure-topic",
             meta={"request_id": "test-123"},
@@ -261,9 +261,9 @@ class TestModalServiceRequestProcessing:
     def test_service_handles_mixed_sync_async_batch(self, loaded_service):
         """ModalService should handle mixed batches of sync and async requests"""
         mixed_inputs = [
-            SyncInputModel(message=TestRequest(text="Sync request")),
+            SyncInputModel(message=SampleRequest(text="Sync request")),
             AsyncInputModel(
-                message=TestRequest(text="Async request"),
+                message=SampleRequest(text="Async request"),
                 success_queue="success-queue",
                 failure_queue="failure-queue",
                 meta={},
@@ -282,10 +282,10 @@ class TestModalServiceErrorHandling:
 
     def test_service_handles_preprocessing_errors(self, tmp_path):
         """ModalService should handle and propagate preprocessing errors"""
-        service = TestModalService("failing-model", tmp_path, should_fail=True, failure_message="preprocess failed")
+        service = SampleModalService("failing-model", tmp_path, should_fail=True, failure_message="preprocess failed")
         service.load_artefacts()
 
-        sync_input = SyncInputModel(message=TestRequest(text="Test"))
+        sync_input = SyncInputModel(message=SampleRequest(text="Test"))
 
         with pytest.raises(HTTPException) as exc_info:
             service.process_request([sync_input])
@@ -296,10 +296,10 @@ class TestModalServiceErrorHandling:
 
     def test_service_handles_prediction_errors(self, tmp_path):
         """ModalService should handle and propagate prediction errors"""
-        service = TestModalService("failing-model", tmp_path, should_fail=True, failure_message="predict failed")
+        service = SampleModalService("failing-model", tmp_path, should_fail=True, failure_message="predict failed")
         service.load_artefacts()
 
-        sync_input = SyncInputModel(message=TestRequest(text="Test"))
+        sync_input = SyncInputModel(message=SampleRequest(text="Test"))
 
         with pytest.raises(HTTPException) as exc_info:
             service.process_request([sync_input])
@@ -310,12 +310,12 @@ class TestModalServiceErrorHandling:
 
     def test_service_handles_cuda_errors_specially(self, tmp_path):
         """ModalService should handle CUDA errors by stopping input fetching"""
-        service = TestModalService(
+        service = SampleModalService(
             "failing-model", tmp_path, should_fail=True, failure_message="CUDA error: out of memory"
         )
         service.load_artefacts()
 
-        sync_input = SyncInputModel(message=TestRequest(text="Test"))
+        sync_input = SyncInputModel(message=SampleRequest(text="Test"))
 
         with patch("modal.experimental.stop_fetching_inputs") as mock_stop:
             with pytest.raises(HTTPException):
@@ -326,12 +326,12 @@ class TestModalServiceErrorHandling:
 
     def test_service_sends_errors_to_async_failure_queues(self, tmp_path):
         """ModalService should send error responses to failure queues for async requests"""
-        service = TestModalService("failing-model", tmp_path, should_fail=True, failure_message="Processing failed")
+        service = SampleModalService("failing-model", tmp_path, should_fail=True, failure_message="Processing failed")
         service.load_artefacts()
 
         async_inputs = [
             AsyncInputModel(
-                message=TestRequest(text=f"Request {i}"),
+                message=SampleRequest(text=f"Request {i}"),
                 success_queue="success-queue",
                 failure_queue="failure-queue",
                 meta={"id": i},
@@ -353,11 +353,14 @@ class TestModalServiceErrorHandling:
 
     def test_service_handles_queue_send_failures_gracefully(self, tmp_path):
         """ModalService should log but not fail when queue sending fails"""
-        service = TestModalService("test-model", tmp_path)
+        service = SampleModalService("test-model", tmp_path)
         service.load_artefacts()
 
         async_input = AsyncInputModel(
-            message=TestRequest(text="Test"), success_queue="unreachable-queue", failure_queue="failure-queue", meta={}
+            message=SampleRequest(text="Test"),
+            success_queue="unreachable-queue",
+            failure_queue="failure-queue",
+            meta={},
         )
 
         # Mock queue sending to fail
@@ -373,12 +376,12 @@ class TestModalServiceVolumeReloading:
 
     def test_service_skips_reload_when_disabled(self, tmp_path):
         """ModalService should skip volume reloading when interval is None"""
-        service = TestModalService("test-model", tmp_path)
+        service = SampleModalService("test-model", tmp_path)
         service.modal_utils.settings.app_settings.deployment_config.volume_reload_interval_seconds = None
         service.load_artefacts()
 
         with patch.object(service.modal_utils, "reload_volumes") as mock_reload:
-            sync_input = SyncInputModel(message=TestRequest(text="Test"))
+            sync_input = SyncInputModel(message=SampleRequest(text="Test"))
             service.process_request([sync_input])
 
             # Should not attempt to reload volumes
@@ -386,7 +389,7 @@ class TestModalServiceVolumeReloading:
 
     def test_service_reloads_volumes_based_on_interval(self, tmp_path):
         """ModalService should reload volumes when interval threshold is exceeded"""
-        service = TestModalService("test-model", tmp_path)
+        service = SampleModalService("test-model", tmp_path)
         service.modal_utils.settings.app_settings.deployment_config.volume_reload_interval_seconds = 60
         service.load_artefacts()
 
@@ -394,7 +397,7 @@ class TestModalServiceVolumeReloading:
         service._last_reload_time = time.time() - 70  # 70 seconds ago
 
         with patch.object(service.modal_utils, "reload_volumes") as mock_reload:
-            sync_input = SyncInputModel(message=TestRequest(text="Test"))
+            sync_input = SyncInputModel(message=SampleRequest(text="Test"))
             service.process_request([sync_input])
 
             # Should reload volumes since 70s > 60s interval
@@ -402,7 +405,7 @@ class TestModalServiceVolumeReloading:
 
     def test_service_calls_volume_reload_hook(self, tmp_path):
         """ModalService should call inference pipeline volume reload hook"""
-        service = TestModalService("test-model", tmp_path)
+        service = SampleModalService("test-model", tmp_path)
         service.modal_utils.settings.app_settings.deployment_config.volume_reload_interval_seconds = 60
         service.load_artefacts()
 
@@ -410,7 +413,7 @@ class TestModalServiceVolumeReloading:
         service._last_reload_time = time.time() - 70
 
         with patch.object(service.modal_utils, "reload_volumes"):
-            sync_input = SyncInputModel(message=TestRequest(text="Test"))
+            sync_input = SyncInputModel(message=SampleRequest(text="Test"))
             service.process_request([sync_input])
 
             # Verify hook was called
@@ -418,7 +421,7 @@ class TestModalServiceVolumeReloading:
 
     def test_service_handles_volume_reload_hook_errors(self, tmp_path):
         """ModalService should handle errors in volume reload hooks gracefully"""
-        service = TestModalService("test-model", tmp_path)
+        service = SampleModalService("test-model", tmp_path)
         service.modal_utils.settings.app_settings.deployment_config.volume_reload_interval_seconds = 60
         service.load_artefacts()
 
@@ -432,7 +435,7 @@ class TestModalServiceVolumeReloading:
         service._last_reload_time = time.time() - 70
 
         with patch.object(service.modal_utils, "reload_volumes"):
-            sync_input = SyncInputModel(message=TestRequest(text="Test"))
+            sync_input = SyncInputModel(message=SampleRequest(text="Test"))
 
             # Should not raise exception even if hook fails
             results = service.process_request([sync_input])
@@ -483,16 +486,16 @@ class TestWebEndpointCreation:
             mock_app = MagicMock()
             mock_create_app.return_value = mock_app
 
-            service = TestModalService("web-service", tmp_path)
+            service = SampleModalService("web-service", tmp_path)
 
-            create_web_endpoints(app_cls=service, input_model=TestRequest, output_model=TestResponse)
+            create_web_endpoints(app_cls=service, input_model=SampleRequest, output_model=SampleResponse)
 
             # Verify create_app was called with correct parameters
             mock_create_app.assert_called_once()
             call_kwargs = mock_create_app.call_args[1]
 
-            assert call_kwargs["input_model"] == TestRequest
-            assert call_kwargs["output_model"] == TestResponse
+            assert call_kwargs["input_model"] == SampleRequest
+            assert call_kwargs["output_model"] == SampleResponse
             assert "sync_fn" in call_kwargs
             assert "async_fn" in call_kwargs
             assert call_kwargs["dependencies"] == []
@@ -500,12 +503,12 @@ class TestWebEndpointCreation:
     def test_create_web_endpoints_configures_auth_middleware(self, tmp_path):
         """create_web_endpoints should always use Modal proxy auth (no custom auth middleware)"""
         with patch("modalkit.fast_api.create_app") as mock_create_app:
-            service = TestModalService("secure-service", tmp_path)
+            service = SampleModalService("secure-service", tmp_path)
 
             # Test with secure=False (should still use Modal proxy auth only)
             service.modal_utils.settings.app_settings.deployment_config.secure = False
 
-            create_web_endpoints(app_cls=service, input_model=TestRequest, output_model=TestResponse)
+            create_web_endpoints(app_cls=service, input_model=SampleRequest, output_model=SampleResponse)
 
             call_kwargs = mock_create_app.call_args[1]
             assert call_kwargs["router_dependency"] is None  # Always use Modal proxy auth
@@ -513,7 +516,7 @@ class TestWebEndpointCreation:
             # Test with secure=True (should use Modal proxy auth)
             service.modal_utils.settings.app_settings.deployment_config.secure = True
 
-            create_web_endpoints(app_cls=service, input_model=TestRequest, output_model=TestResponse)
+            create_web_endpoints(app_cls=service, input_model=SampleRequest, output_model=SampleResponse)
 
             call_kwargs = mock_create_app.call_args[1]
             assert call_kwargs["router_dependency"] is None  # Always use Modal proxy auth
@@ -525,7 +528,7 @@ class TestModalServiceIntegration:
     def test_service_handles_realistic_ml_workflow(self, tmp_path):
         """ModalService should handle realistic ML processing workflows"""
         # Create service with realistic configuration
-        service = TestModalService(
+        service = SampleModalService(
             "production-sentiment-analyzer",
             tmp_path,
             processing_delay=0.01,  # Simulate realistic processing time
@@ -534,10 +537,10 @@ class TestModalServiceIntegration:
 
         # Simulate realistic request batch
         requests = [
-            SyncInputModel(message=TestRequest(text="This product is amazing!", priority="high")),
-            SyncInputModel(message=TestRequest(text="Not satisfied with the quality", priority="normal")),
+            SyncInputModel(message=SampleRequest(text="This product is amazing!", priority="high")),
+            SyncInputModel(message=SampleRequest(text="Not satisfied with the quality", priority="normal")),
             AsyncInputModel(
-                message=TestRequest(text="Neutral opinion about the service", priority="low"),
+                message=SampleRequest(text="Neutral opinion about the service", priority="low"),
                 success_queue="analytics-pipeline",
                 failure_queue="error-handling",
                 meta={"user_id": "user123", "session_id": "sess456"},
@@ -563,11 +566,11 @@ class TestModalServiceIntegration:
 
     def test_service_maintains_performance_under_load(self, tmp_path):
         """ModalService should maintain performance characteristics under load"""
-        service = TestModalService("high-throughput-model", tmp_path, processing_delay=0.001)
+        service = SampleModalService("high-throughput-model", tmp_path, processing_delay=0.001)
         service.load_artefacts()
 
         # Create larger batch to test performance
-        large_batch = [SyncInputModel(message=TestRequest(text=f"Request {i}")) for i in range(50)]
+        large_batch = [SyncInputModel(message=SampleRequest(text=f"Request {i}")) for i in range(50)]
 
         start_time = time.time()
         results = service.process_request(large_batch)

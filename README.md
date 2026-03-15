@@ -29,7 +29,7 @@ Modalkit adds ML deployment patterns on top of Modal's serverless infrastructure
 
 ### Standardized ML Architecture
 - Enforced `preprocess()` → `predict()` → `postprocess()` pattern
-- Consistent API endpoints: `/predict_sync`, `/predict_batch`, `/predict_async`
+- Consistent API endpoints: `/predict_sync`, `/predict_async`
 - Pydantic models for data validation
 
 ### Configuration-Driven Deployments
@@ -38,7 +38,7 @@ Modalkit adds ML deployment patterns on top of Modal's serverless infrastructure
 - Declarative infrastructure definitions
 
 ### Production Features
-- Authentication middleware (API key or Modal proxy auth)
+- Authentication via Modal proxy auth
 - Async processing with multiple queue backend support
 - Direct S3/GCS/R2 bucket mounting
 - Request batching for GPU efficiency
@@ -52,13 +52,13 @@ Modalkit adds ML deployment patterns on top of Modal's serverless infrastructure
 ## Features
 
 - Modal integration for serverless deployment
-- Authentication: Modal proxy auth or custom API keys with AWS SSM
+- Authentication via Modal proxy auth
 - Cloud storage: S3, GCS, and R2 bucket mounting
 - Queue integration: Optional TaskIQ, SQS, or custom queue backends
 - Batch inference with configurable batch sizes
 - Type safety with Pydantic models
-- Pre-configured tooling: ruff, mypy, pre-commit
-- Error handling and logging
+- Pre-configured tooling: ruff, pre-commit
+- Error handling and structured logging
 
 ## Quick Start
 
@@ -169,15 +169,6 @@ Create a `modalkit.yaml` configuration file:
 app_settings:
   app_prefix: "translation-service"
 
-  # Authentication configuration
-  auth_config:
-    # Option 1: Use API key from AWS SSM
-    ssm_key: "/translation/api-key"
-    auth_header: "x-api-key"
-    # Option 2: Use hardcoded API key (not recommended for production)
-    # api_key: "your-api-key-here"
-    # auth_header: "x-api-key"
-
   # Container configuration
   build_config:
     image: "python:3.11-slim"  # or your custom image
@@ -241,70 +232,41 @@ modal logs -f
 
 ```python
 import requests
-import asyncio
 
-# For standard API key auth
-headers = {"x-api-key": "your-api-key"}
+# Modal proxy auth headers
+headers = {
+    "Modal-Key": "your-modal-key",
+    "Modal-Secret": "your-modal-secret",
+}
 
 # Synchronous endpoint
 response = requests.post(
     "https://your-org--translation-service.modal.run/predict_sync",
     json={"text": "Hello world", "language": "en"},
-    headers=headers
+    params={"model_name": "translation_model"},
+    headers=headers,
 )
 print(response.json())
 # {"translated_text": "HELLO WORLD", "confidence": 0.95}
 
-# Asynchronous endpoint (returns immediately)
+# Asynchronous endpoint (returns immediately with job ID)
 response = requests.post(
     "https://your-org--translation-service.modal.run/predict_async",
-    json={"text": "Hello world", "language": "en"},
-    headers=headers
+    json={
+        "message": {"text": "Hello world", "language": "en"},
+        "success_queue": "results",
+        "failure_queue": "errors",
+    },
+    params={"model_name": "translation_model"},
+    headers=headers,
 )
 print(response.json())
-# {"message_id": "550e8400-e29b-41d4-a716-446655440000"}
-
-# Batch endpoint
-response = requests.post(
-    "https://your-org--translation-service.modal.run/predict_batch",
-    json=[
-        {"text": "Hello", "language": "en"},
-        {"text": "World", "language": "en"}
-    ],
-    headers=headers
-)
-print(response.json())
-# [{"translated_text": "HELLO", "confidence": 0.95}, {"translated_text": "WORLD", "confidence": 0.95}]
+# {"job_id": "550e8400-e29b-41d4-a716-446655440000"}
 ```
 
 ## Authentication
 
-Modalkit supports multiple authentication options:
-
-### Option 1: Custom API Key (Default)
-Configure with `secure: false` in your deployment config.
-
-```yaml
-# modalkit.yaml
-deployment_config:
-  secure: false
-
-auth_config:
-  # Store in AWS SSM (recommended)
-  ssm_key: "/myapp/api-key"
-  # OR hardcode (not recommended)
-  # api_key: "sk-1234567890"
-  auth_header: "x-api-key"
-```
-
-```python
-# Client usage
-headers = {"x-api-key": "your-api-key"}
-response = requests.post(url, json=data, headers=headers)
-```
-
-### Option 2: Modal Proxy Authentication
-Configure with `secure: true` for Modal's built-in auth:
+Modalkit uses Modal proxy authentication. Set `secure: true` in your deployment config:
 
 ```yaml
 # modalkit.yaml
@@ -321,8 +283,6 @@ headers = {
 response = requests.post(url, json=data, headers=headers)
 ```
 
-**Note**: Modal proxy auth is recommended for production as it's managed by Modal and requires no additional setup.
-
 ## Configuration
 
 ### Configuration Structure
@@ -333,7 +293,6 @@ Modalkit uses YAML configuration with two main sections:
 # modalkit.yaml
 app_settings:        # Application deployment settings
   app_prefix: str    # Prefix for your Modal app name
-  auth_config:       # Authentication configuration
   build_config:      # Container build settings
   deployment_config: # Runtime deployment settings
   batch_config:      # Batch processing settings
@@ -621,9 +580,7 @@ uv run ruff check modalkit/ tests/
 | Endpoint | Method | Description | Returns |
 |----------|---------|-------------|----------|
 | `/predict_sync` | POST | Synchronous inference | Model output |
-| `/predict_async` | POST | Async inference (queued) | Message ID |
-| `/predict_batch` | POST | Batch inference | List of outputs |
-| `/health` | GET | Health check | Status |
+| `/predict_async` | POST | Async inference (queued) | Job ID |
 
 ### InferencePipeline Methods
 

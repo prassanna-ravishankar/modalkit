@@ -88,7 +88,7 @@ class DeploymentConfig(BaseModel):
     region: str | None = None
     gpu: str | list[str] | None = None
     volumes: dict[str, str] | None = None
-    volume_reload_interval_seconds: int | None = -1
+    volume_reload_interval_seconds: int | None = None
     concurrency_limit: int | None = None
     retries: int = 1
     secrets: list[str] = Field(default_factory=list)
