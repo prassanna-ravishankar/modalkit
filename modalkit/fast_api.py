@@ -1,15 +1,12 @@
 from __future__ import annotations
 
 from collections.abc import Awaitable, Callable
-from typing import Any, TypeVar
+from typing import Any
 
 from fastapi import APIRouter, Body, Depends, FastAPI
 from pydantic import BaseModel
 
 from modalkit.iomodel import AsyncInputModel, AsyncOutputModel, SyncInputModel
-
-T_input = TypeVar("T_input", bound=BaseModel)
-T_output = TypeVar("T_output", bound=BaseModel)
 
 
 def create_app(

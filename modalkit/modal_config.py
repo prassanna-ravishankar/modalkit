@@ -161,12 +161,7 @@ class ModalConfig:
                 - Local file/directory mounts (added via Modal 1.0 API)
         """
         raw_commands = self.app_settings.build_config.extra_run_commands
-        if isinstance(raw_commands, str):
-            extra_run_commands = [raw_commands]
-        elif isinstance(raw_commands, list):
-            extra_run_commands = raw_commands
-        else:
-            extra_run_commands = []
+        extra_run_commands = [raw_commands] if isinstance(raw_commands, str) else list(raw_commands)
 
         envvars = self.app_settings.build_config.env.copy()
         modalkit_config_path = os.getenv("MODALKIT_CONFIG")

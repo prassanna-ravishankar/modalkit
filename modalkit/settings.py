@@ -246,4 +246,3 @@ class Settings(YamlBaseSettings):  # type: ignore[no-any-unimported]
 if __name__ == "__main__":
     settings = Settings()
     print(settings.model_dump())
-    pass
