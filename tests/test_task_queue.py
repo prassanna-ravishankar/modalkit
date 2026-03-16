@@ -82,6 +82,78 @@ class TestSQSBackend:
             await backend.send_message("test-queue", {"test": "data"})  # type: ignore
 
 
+class TestSQSBackendEdgeCases:
+    """Test SQS backend queue creation and error paths"""
+
+    @pytest.mark.asyncio
+    @patch("boto3.client")
+    async def test_queue_auto_creation_on_not_exist(self, mock_boto_client: MagicMock) -> None:
+        """SQS backend should create queue when it doesn't exist"""
+        mock_sqs = MagicMock()
+        mock_boto_client.return_value = mock_sqs
+
+        # Simulate QueueDoesNotExist exception
+        queue_not_exist = type("QueueDoesNotExist", (Exception,), {})
+        mock_sqs.exceptions.QueueDoesNotExist = queue_not_exist
+        mock_sqs.get_queue_url.side_effect = queue_not_exist("not found")
+        mock_sqs.create_queue.return_value = {"QueueUrl": "http://new-queue.url"}
+        mock_sqs.send_message.return_value = {"MessageId": "456"}
+
+        backend = SQSBackend()
+        result = await backend.send_message("new-queue", '{"data": "test"}')
+
+        assert result is True
+        mock_sqs.create_queue.assert_called_once_with(QueueName="new-queue")
+        mock_sqs.send_message.assert_called_once()
+
+    @pytest.mark.asyncio
+    @patch("boto3.client")
+    async def test_queue_creation_failure(self, mock_boto_client: MagicMock) -> None:
+        """SQS backend should return False when queue creation fails"""
+        mock_sqs = MagicMock()
+        mock_boto_client.return_value = mock_sqs
+
+        queue_not_exist = type("QueueDoesNotExist", (Exception,), {})
+        mock_sqs.exceptions.QueueDoesNotExist = queue_not_exist
+        mock_sqs.get_queue_url.side_effect = queue_not_exist("not found")
+        mock_sqs.create_queue.side_effect = RuntimeError("permission denied")
+
+        backend = SQSBackend()
+        result = await backend.send_message("bad-queue", '{"data": "test"}')
+
+        assert result is False
+
+    @pytest.mark.asyncio
+    @patch("boto3.client")
+    async def test_get_queue_url_generic_error(self, mock_boto_client: MagicMock) -> None:
+        """SQS backend should return False on unexpected get_queue_url errors"""
+        mock_sqs = MagicMock()
+        mock_boto_client.return_value = mock_sqs
+
+        queue_not_exist = type("QueueDoesNotExist", (Exception,), {})
+        mock_sqs.exceptions.QueueDoesNotExist = queue_not_exist
+        mock_sqs.get_queue_url.side_effect = RuntimeError("network error")
+
+        backend = SQSBackend()
+        result = await backend.send_message("queue", '{"data": "test"}')
+
+        assert result is False
+
+    @pytest.mark.asyncio
+    @patch("boto3.client")
+    async def test_send_message_failure(self, mock_boto_client: MagicMock) -> None:
+        """SQS backend should return False when send_message fails"""
+        mock_sqs = MagicMock()
+        mock_boto_client.return_value = mock_sqs
+        mock_sqs.get_queue_url.return_value = {"QueueUrl": "http://queue.url"}
+        mock_sqs.send_message.side_effect = RuntimeError("throttled")
+
+        backend = SQSBackend()
+        result = await backend.send_message("queue", '{"data": "test"}')
+
+        assert result is False
+
+
 class TestBackendFactory:
     """Test the backend factory and registration system"""
 

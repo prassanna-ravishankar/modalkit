@@ -583,3 +583,142 @@ class TestModalServiceIntegration:
         # Performance should scale reasonably (not linearly due to batching)
         # With 0.001s per request, 50 requests should take much less than 0.05s due to batching
         assert processing_time < 0.1  # Allow some overhead for test environment
+
+
+class TestSendToQueue:
+    """Test _send_to_queue with injected and fallback backends"""
+
+    @pytest.mark.asyncio
+    async def test_send_to_queue_with_injected_backend(self, tmp_path):
+        """Should use injected queue backend when available"""
+        from modalkit.task_queue import InMemoryBackend
+
+        backend = InMemoryBackend()
+        service = SampleModalService("test-model", tmp_path, queue_backend=backend)
+        result = await service._send_to_queue("q", '{"msg": "hi"}')
+        assert result is True
+
+    @pytest.mark.asyncio
+    async def test_send_to_queue_injected_backend_error(self, tmp_path):
+        """Should return False when injected backend raises"""
+        from unittest.mock import AsyncMock
+
+        backend = MagicMock()
+        backend.send_message = AsyncMock(side_effect=RuntimeError("boom"))
+        service = SampleModalService("test-model", tmp_path, queue_backend=backend)
+        result = await service._send_to_queue("q", '{"msg": "hi"}')
+        assert result is False
+
+    @pytest.mark.asyncio
+    async def test_send_to_queue_fallback_config_based(self, tmp_path):
+        """Should fall back to send_response_queue when no backend injected"""
+        service = SampleModalService("test-model", tmp_path)
+        with patch("modalkit.modal_service.send_response_queue", return_value=True) as mock_send:
+            result = await service._send_to_queue("q", '{"msg": "hi"}')
+            assert result is True
+            mock_send.assert_called_once_with("q", '{"msg": "hi"}')
+
+    @pytest.mark.asyncio
+    async def test_send_to_queue_fallback_error(self, tmp_path):
+        """Should return False when fallback raises"""
+        service = SampleModalService("test-model", tmp_path)
+        with patch("modalkit.modal_service.send_response_queue", side_effect=RuntimeError("fail")):
+            result = await service._send_to_queue("q", '{"msg": "hi"}')
+            assert result is False
+
+
+class TestSendAsyncResponse:
+    """Test send_async_response queue routing"""
+
+    def _make_service(self, tmp_path):
+        service = SampleModalService("test-model", tmp_path)
+        service.load_artefacts()
+        return service
+
+    def test_success_no_queue_skips_send(self, tmp_path):
+        """Should skip sending when success_queue is empty"""
+        service = self._make_service(tmp_path)
+        output = InferenceOutputModel(status="success")
+        async_input = AsyncInputModel(message=SampleRequest(text="t"), success_queue="", failure_queue="", meta={})
+        # Should not raise, just log debug
+        service.send_async_response(0, output, async_input)
+
+    def test_failure_no_queue_skips_send(self, tmp_path):
+        """Should skip sending when failure_queue is empty"""
+        service = self._make_service(tmp_path)
+        output = InferenceOutputModel(status="error", error="something broke")
+        async_input = AsyncInputModel(message=SampleRequest(text="t"), success_queue="", failure_queue="", meta={})
+        service.send_async_response(0, output, async_input)
+
+    def test_failure_sends_to_failure_queue(self, tmp_path):
+        """Should send error responses to the failure queue"""
+        service = self._make_service(tmp_path)
+        output = InferenceOutputModel(status="error", error="something broke")
+        async_input = AsyncInputModel(
+            message=SampleRequest(text="t"),
+            success_queue="s-queue",
+            failure_queue="f-queue",
+            meta={"id": 1},
+        )
+        with patch("modalkit.modal_service.send_response_queue", return_value=True) as mock_send:
+            service.send_async_response(0, output, async_input)
+            mock_send.assert_called_once()
+            assert mock_send.call_args[0][0] == "f-queue"
+
+    def test_delayed_failure_preserves_original_meta(self, tmp_path):
+        """DelayedFailureOutputModel should not overwrite meta from input"""
+        from modalkit.iomodel import DelayedFailureOutputModel
+
+        service = self._make_service(tmp_path)
+        async_input = AsyncInputModel(
+            message=SampleRequest(text="t"),
+            success_queue="s",
+            failure_queue="f-queue",
+            meta={"id": 1},
+        )
+        output = DelayedFailureOutputModel(status="error", error="boom", original_message=async_input)
+        with patch("modalkit.modal_service.send_response_queue", return_value=True):
+            service.send_async_response(0, output, async_input)
+            # meta should NOT have been overwritten (it stays default {})
+            assert output.meta == {}
+
+
+class TestLogQueueResult:
+    """Test _log_queue_result callback"""
+
+    def test_logs_warning_on_false_result(self, tmp_path):
+        """Should log warning when task returned False"""
+        import asyncio
+
+        service = SampleModalService("test-model", tmp_path)
+
+        async def _false():
+            return False
+
+        loop = asyncio.new_event_loop()
+        task = loop.create_task(_false())
+        loop.run_until_complete(task)
+        loop.close()
+
+        # Should not raise
+        service._log_queue_result(task, "test-queue", "success")
+
+    def test_logs_error_on_exception(self, tmp_path):
+        """Should log error when task raised an exception"""
+        import asyncio
+
+        service = SampleModalService("test-model", tmp_path)
+
+        async def _fail():
+            raise RuntimeError("queue down")
+
+        import contextlib
+
+        loop = asyncio.new_event_loop()
+        task = loop.create_task(_fail())
+        with contextlib.suppress(RuntimeError):
+            loop.run_until_complete(task)
+        loop.close()
+
+        # Should not raise
+        service._log_queue_result(task, "test-queue", "failure")

@@ -74,19 +74,19 @@ class SQSBackend:
         # Get or create queue
         try:
             sqs_response = self.client.get_queue_url(QueueName=queue_name)
+            queue_url = sqs_response["QueueUrl"]
         except self.client.exceptions.QueueDoesNotExist:
             logger.debug(f"Queue: {queue_name} does not exist. Creating it.")
             try:
                 sqs_response = self.client.create_queue(QueueName=queue_name)
-                logger.debug(f"Created queue with url: {sqs_response['QueueUrl']}")
+                queue_url = sqs_response["QueueUrl"]
+                logger.debug(f"Created queue with url: {queue_url}")
             except Exception as create_error:
                 logger.error(f"Failed to create SQS queue {queue_name}: {create_error}")
                 return False
         except Exception as e:
             logger.error(f"Error while fetching SQS queue URL: {e}")
             return False
-        else:
-            queue_url = sqs_response["QueueUrl"]
 
         # Send message
         try:
