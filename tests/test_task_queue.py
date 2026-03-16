@@ -206,30 +206,3 @@ class TestDependencyInjection:
         backend = MockBackend()
         assert await backend.send_message("test", "expected") is True
         assert await backend.send_message("test", "unexpected") is False
-
-
-class TestTaskIQExample:
-    """Test the TaskIQ example implementation"""
-
-    @pytest.mark.asyncio
-    async def test_taskiq_example_import_error(self) -> None:
-        """Test TaskIQ example handles import errors gracefully"""
-        # This will fail because TaskIQ is not installed, but we can test the structure
-        from modalkit.task_queue import TaskIQExample
-
-        # Should raise DependencyError when TaskIQ is not available
-        with pytest.raises(Exception):  # DependencyError # noqa: B017
-            TaskIQExample()
-
-
-class TestCustomRedisExample:
-    """Test the custom Redis example implementation"""
-
-    @pytest.mark.asyncio
-    async def test_redis_example_import_error(self) -> None:
-        """Test Redis example handles import errors gracefully"""
-        from modalkit.task_queue import CustomRedisExample
-
-        # Should raise DependencyError when redis is not available
-        with pytest.raises(Exception):  # DependencyError # noqa: B017
-            CustomRedisExample()

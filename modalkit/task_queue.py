@@ -3,7 +3,7 @@ from typing import Any, Protocol
 
 from loguru import logger
 
-from modalkit.exceptions import BackendError, DependencyError, TypeValidationError
+from modalkit.exceptions import BackendError, TypeValidationError
 
 
 class QueueBackend(Protocol):
@@ -195,78 +195,3 @@ def send_response_queue(queue_name: str, queue_message: str) -> bool:
         return False
 
     return bool(result)
-
-
-# ===== Examples for User Implementation =====
-
-
-class TaskIQExample:
-    """
-    Example showing how users can implement TaskIQ support properly.
-
-    This is just an example - users should implement this in their own code
-    based on their specific TaskIQ setup.
-    """
-
-    def __init__(self, broker_url: str = "redis://localhost:6379"):
-        """
-        Initialize TaskIQ broker.
-
-        Users would set this up according to their needs:
-        - TaskIQ with Redis: AsyncRedisTaskiqBroker
-        - TaskIQ with SQS: SQSBroker from taskiq-aws
-        - TaskIQ with RabbitMQ: RabbitBroker from taskiq-rabbitmq
-        """
-        try:
-            from taskiq import InMemoryBroker
-            from taskiq_redis import AsyncRedisTaskiqBroker  # type: ignore
-        except ImportError as e:
-            raise DependencyError("TaskIQ dependencies not available") from e
-
-        if broker_url.startswith("redis://"):
-            self.broker = AsyncRedisTaskiqBroker(broker_url)
-        else:
-            self.broker = InMemoryBroker()
-
-    async def send_message(self, queue_name: str, message: str) -> bool:
-        """TaskIQ-based implementation of QueueBackend"""
-
-        # Define a task function (this could be done once at startup)
-        @self.broker.task(task_name=f"process_{queue_name}")
-        async def process_message(msg: str) -> None:
-            logger.info(f"TaskIQ processing: {msg}")
-
-        try:
-            # Send message to task queue
-            await process_message.kiq(message)
-        except Exception as e:
-            logger.error(f"Failed to send TaskIQ message: {e}")
-            return False
-        else:
-            logger.info(f"Message sent to TaskIQ queue: {queue_name}")
-            return True
-
-
-class CustomRedisExample:
-    """
-    Example showing how users can implement a custom Redis backend.
-    """
-
-    def __init__(self, redis_url: str = "redis://localhost:6379", **kwargs: Any):
-        try:
-            import redis.asyncio as redis  # type: ignore
-        except ImportError as e:
-            raise DependencyError("redis package required") from e
-
-        self.redis = redis.from_url(redis_url)
-
-    async def send_message(self, queue_name: str, message: str) -> bool:
-        """Custom Redis implementation"""
-        try:
-            await self.redis.lpush(queue_name, message)
-        except Exception as e:
-            logger.error(f"Failed to send Redis message: {e}")
-            return False
-        else:
-            logger.info(f"Message sent to Redis queue: {queue_name}")
-            return True
