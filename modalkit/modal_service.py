@@ -119,15 +119,36 @@ class ModalService:
 
         The method is decorated with @modal.enter() to ensure it runs during container startup.
         """
-        settings = self.modal_utils.settings
-        self._model_inference_kwargs = settings.model_settings.model_entries[self.model_name]
+        if not hasattr(self, "inference_implementation") or self.inference_implementation is None:
+            raise RuntimeError(
+                f"{type(self).__name__} must set 'inference_implementation' to an InferencePipeline subclass"
+            )
 
-        self._model_inference_instance: InferencePipeline = self.inference_implementation(
-            model_name=self.model_name,
-            all_model_data_folder=str(settings.model_settings.local_model_repository_folder),
-            common_settings=settings.model_settings.common,
-            **self._model_inference_kwargs,
-        )
+        settings = self.modal_utils.settings
+        model_entries = settings.model_settings.model_entries
+
+        if self.model_name not in model_entries:
+            available = ", ".join(model_entries.keys()) or "(none)"
+            raise RuntimeError(
+                f"Model '{self.model_name}' not found in model_entries. Available: {available}. "
+                f"Check that model_name matches a key in modalkit.yaml model_settings.model_entries"
+            )
+
+        self._model_inference_kwargs = model_entries[self.model_name]
+
+        try:
+            self._model_inference_instance: InferencePipeline = self.inference_implementation(
+                model_name=self.model_name,
+                all_model_data_folder=str(settings.model_settings.local_model_repository_folder),
+                common_settings=settings.model_settings.common,
+                **self._model_inference_kwargs,
+            )
+        except Exception as e:
+            raise RuntimeError(
+                f"Failed to initialize {self.inference_implementation.__name__} for model '{self.model_name}': {e}"
+            ) from e
+
+        logger.info(f"Loaded model '{self.model_name}' using {self.inference_implementation.__name__}")
 
         # Initialize volume reloading if configured
         self._last_reload_time = time.time()
@@ -203,10 +224,11 @@ class ModalService:
         except Exception as e:
             elapsed_ms = (time.perf_counter() - t_start) * 1000
             if "CUDA error" in str(e):
-                logger.error("Exiting container due to CUDA error. This is potentially due to a hardware issue")
+                logger.error(
+                    f"[{self.model_name}] CUDA error — stopping container. This may indicate a hardware issue or OOM."
+                )
                 modal.experimental.stop_fetching_inputs()
-            # Log full error server-side, return generic message to clients
-            logger.error(f"Error processing batch of {batch_size} after {elapsed_ms:.1f}ms: {e}")
+            logger.error(f"[{self.model_name}] Batch of {batch_size} failed after {elapsed_ms:.1f}ms: {e}")
 
             err_detail = f"Internal Server Error. Error log: {e}"
             for message_idx, input_data in enumerate(input_list):
@@ -403,6 +425,9 @@ def create_web_endpoints(
     """
     from modalkit.fast_api import create_app
 
+    # Use the service's model_name as default so callers don't need to pass it
+    default_model = getattr(app_cls, "model_name", None)
+
     app = create_app(
         input_model=input_model,
         output_model=output_model,
@@ -410,5 +435,6 @@ def create_web_endpoints(
         router_dependency=None,
         sync_fn=ModalService.sync_call(type(app_cls)),
         async_fn=ModalService.async_call(type(app_cls)),
+        default_model_name=default_model,
     )
     return app
