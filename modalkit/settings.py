@@ -3,7 +3,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from pydantic_settings import BaseSettings, PydanticBaseSettingsSource, SettingsConfigDict, YamlConfigSettingsSource
 from pydantic_settings_yaml import YamlBaseSettings  # type: ignore[import-untyped]
 
@@ -85,6 +85,8 @@ class DeploymentConfig(BaseModel):
         cloud_bucket_mounts (list[CloudBucketMount]): List of cloud bucket mounts for the deployment
     """
 
+    model_config = ConfigDict(extra="forbid")
+
     region: str | None = None
     gpu: str | list[str] | None = None
     volumes: dict[str, str] | None = None
@@ -118,6 +120,8 @@ class BatchConfig(BaseModel):
         wait_ms (int): limits the amount of time waiting for more inputs after the first input is received
     """
 
+    model_config = ConfigDict(extra="forbid")
+
     max_batch_size: int = 1
     wait_ms: int = 0
 
@@ -130,6 +134,8 @@ class QueueConfig(BaseModel):
         backend (str): Queue backend type ("sqs" or "taskiq")
         broker_url (str): Broker URL for taskiq (e.g., "redis://localhost:6379" or "memory://")
     """
+
+    model_config = ConfigDict(extra="forbid")
 
     backend: str = "sqs"
     broker_url: str = "memory://"
@@ -146,6 +152,8 @@ class BuildConfig(BaseModel):
         extra_run_commands (str): Extra run commands for the model
         workdir (str): Working directory in the container
     """
+
+    model_config = ConfigDict(extra="forbid")
 
     image: str
     tag: str
@@ -166,6 +174,8 @@ class AppSettings(BaseModel):
         queue_config (QueueConfig): Queue configuration for async messaging
     """
 
+    model_config = ConfigDict(extra="forbid")
+
     app_prefix: str
     build_config: BuildConfig
     deployment_config: DeploymentConfig
@@ -182,6 +192,8 @@ class ModelSettings(BaseModel):
         model_entries (dict[str, Any]): Model entries for the model
         common (dict[str, Any]): Common settings for the model
     """
+
+    model_config = ConfigDict(extra="forbid")
 
     local_model_repository_folder: Path
     model_entries: dict[str, Any]

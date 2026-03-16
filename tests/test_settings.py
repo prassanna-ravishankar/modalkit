@@ -37,9 +37,6 @@ def test_change_settings_file_location(monkeypatch, tmp_path):
         """
 app_settings:
   app_prefix: "new_prefix"
-  auth_config:
-    ssm_key: "/test/key"
-    auth_header: "x-test-header"
   build_config:
     image: "test-image"
     tag: "test"
@@ -73,9 +70,6 @@ def test_multiple_settings_file(monkeypatch, tmp_path):
         """
 app_settings:
   app_prefix: "new_prefix"
-  auth_config:
-    ssm_key: "/test/key"
-    auth_header: "x-test-header"
   build_config:
     image: "test-image"
     tag: "test"
