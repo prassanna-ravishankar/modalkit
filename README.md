@@ -75,6 +75,16 @@ uv pip install modalkit
 pip install git+https://github.com/prassanna-ravishankar/modalkit.git
 ```
 
+### Scaffold a Project
+
+```bash
+modalkit init my-service
+cd my-service
+modal serve app.py
+```
+
+This creates `modalkit.yaml`, `model.py`, and `app.py` with working defaults. Edit `model.py` to add your inference logic.
+
 ### Complete Examples
 
 See the documentation for working examples:

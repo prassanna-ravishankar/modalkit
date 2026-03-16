@@ -136,10 +136,10 @@ def init_project(target_dir: Path, project_name: str) -> None:
     if skipped:
         print(f"Skipped (already exist): {', '.join(skipped)}")
 
-    print(f"\nNext steps:")
+    print("\nNext steps:")
     print(f"  cd {target_dir}")
-    print(f"  modal serve app.py    # test locally")
-    print(f"  modal deploy app.py   # deploy to Modal")
+    print("  modal serve app.py    # test locally")
+    print("  modal deploy app.py   # deploy to Modal")
 
 
 def main(argv: list[str] | None = None) -> None:
