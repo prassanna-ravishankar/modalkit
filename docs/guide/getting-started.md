@@ -16,9 +16,21 @@ This guide will walk you through creating your first ML deployment with Modalkit
    pip install modalkit
    ```
 
+## Quick Start with CLI
+
+The fastest way to get started:
+
+```bash
+mkdir my-ml-project && cd my-ml-project
+modalkit init my-ml-project
+modal serve app.py
+```
+
+This scaffolds `modalkit.yaml`, `model.py`, and `app.py` with working defaults. Edit `model.py` to add your model logic.
+
 ## Project Structure
 
-Create a new directory for your project:
+A modalkit project looks like this:
 
 ```
 my-ml-project/
@@ -151,16 +163,17 @@ modal serve app.py
 Test with curl:
 
 ```bash
+# Health check
+curl http://localhost:8000/health
+
 # Sync endpoint
-curl -X POST http://localhost:8000/predict_sync \
+curl -X POST "http://localhost:8000/predict_sync?model_name=translation_model" \
   -H "Content-Type: application/json" \
-  -H "x-api-key: dev-key-123" \
   -d '{"text": "Hello world", "language": "en"}'
 
 # Async endpoint
-curl -X POST http://localhost:8000/predict_async \
+curl -X POST "http://localhost:8000/predict_async?model_name=translation_model" \
   -H "Content-Type: application/json" \
-  -H "x-api-key: dev-key-123" \
   -d '{"message": {"text": "Hello"}, "success_queue": "results", "failure_queue": "errors"}'
 ```
 

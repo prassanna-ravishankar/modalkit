@@ -26,6 +26,9 @@ dependencies = [
     "pydantic-settings>=2.6.1",
 ]
 
+[project.scripts]
+modalkit = "modalkit.cli:main"
+
 [project.urls]
 Repository = "https://github.com/prassanna-ravishankar/modalkit"
 
