@@ -177,6 +177,7 @@ class ModalService:
         """
         batch_size = len(input_list)
         logger.info(f"Received batch of {batch_size} input requests")
+        t_start = time.perf_counter()
 
         try:
             # Reload volumes if needed before processing the request
@@ -185,8 +186,11 @@ class ModalService:
             # Run Inference. Outputs are expected to be in the same order as the inputs
             messages = [input_data.message for input_data in input_list]
             raw_output_list = self._model_inference_instance.run_inference(messages)
+
+            elapsed_ms = (time.perf_counter() - t_start) * 1000
             logger.info(
-                f"Statuses of the {batch_size} processed requests: {[output.status for output in raw_output_list]}"
+                f"Batch of {batch_size} processed in {elapsed_ms:.1f}ms — "
+                f"statuses: {[output.status for output in raw_output_list]}"
             )
 
             # For any requests that were async, return the response to the appropriate queue
@@ -197,19 +201,21 @@ class ModalService:
         # Unhappy path: On internal error, return error outputs to the queues of all async messages
         # and kill the container if a CUDA error was encountered
         except Exception as e:
+            elapsed_ms = (time.perf_counter() - t_start) * 1000
             if "CUDA error" in str(e):
                 logger.error("Exiting container due to CUDA error. This is potentially due to a hardware issue")
                 modal.experimental.stop_fetching_inputs()
-            err_msg = f"Internal Server Error. Error log: {e}"
-            logger.error(f"Error processing batch: {err_msg}")
+            # Log full error server-side, return generic message to clients
+            logger.error(f"Error processing batch of {batch_size} after {elapsed_ms:.1f}ms: {e}")
 
+            err_detail = f"Internal Server Error. Error log: {e}"
             for message_idx, input_data in enumerate(input_list):
                 if isinstance(input_data, AsyncInputModel):
                     error_response = DelayedFailureOutputModel(
-                        status="error", error=err_msg, original_message=input_data
+                        status="error", error=err_detail, original_message=input_data
                     )
                     self.send_async_response(message_idx, error_response, input_data)
-            raise HTTPException(status_code=500, detail=err_msg) from e
+            raise HTTPException(status_code=500, detail="Internal Server Error") from e
         else:
             return raw_output_list
 

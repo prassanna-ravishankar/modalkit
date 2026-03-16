@@ -291,7 +291,7 @@ class TestModalServiceErrorHandling:
 
         http_exception: HTTPException = exc_info.value  # type: ignore  # We know this is HTTPException from pytest.raises
         assert http_exception.status_code == 500
-        assert "preprocess failed" in str(http_exception.detail)
+        assert http_exception.detail == "Internal Server Error"
 
     def test_service_handles_prediction_errors(self, tmp_path):
         """ModalService should handle and propagate prediction errors"""
@@ -305,7 +305,7 @@ class TestModalServiceErrorHandling:
 
         http_exception: HTTPException = exc_info.value  # type: ignore  # We know this is HTTPException from pytest.raises
         assert http_exception.status_code == 500
-        assert "predict failed" in str(http_exception.detail)
+        assert http_exception.detail == "Internal Server Error"
 
     def test_service_handles_cuda_errors_specially(self, tmp_path):
         """ModalService should handle CUDA errors by stopping input fetching"""
