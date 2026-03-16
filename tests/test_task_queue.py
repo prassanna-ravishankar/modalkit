@@ -45,7 +45,16 @@ class TestSQSBackend:
 
     def test_sqs_backend_without_boto3(self) -> None:
         """Test SQS backend when boto3 is not available"""
-        with patch.object(SQSBackend, "__init__", lambda self, **kwargs: setattr(self, "available", False)):
+        import builtins
+
+        real_import = builtins.__import__
+
+        def mock_import(name, *args, **kwargs):
+            if name == "boto3":
+                raise ImportError("No module named 'boto3'")
+            return real_import(name, *args, **kwargs)
+
+        with patch("builtins.__import__", side_effect=mock_import):
             backend = SQSBackend()
             assert backend.available is False
 

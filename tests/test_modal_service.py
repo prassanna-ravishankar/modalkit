@@ -386,6 +386,21 @@ class TestModalServiceVolumeReloading:
             # Should not attempt to reload volumes
             mock_reload.assert_not_called()
 
+    def test_service_skips_reload_when_interval_not_reached(self, tmp_path):
+        """ModalService should skip volume reload when interval hasn't elapsed"""
+        service = SampleModalService("test-model", tmp_path)
+        service.modal_utils.settings.app_settings.deployment_config.volume_reload_interval_seconds = 600
+        service.load_artefacts()
+
+        # Last reload was just now — interval is 600s, so no reload needed
+        service._last_reload_time = time.time()
+
+        with patch.object(service.modal_utils, "reload_volumes") as mock_reload:
+            sync_input = SyncInputModel(message=SampleRequest(text="Test"))
+            service.process_request([sync_input])
+
+            mock_reload.assert_not_called()
+
     def test_service_reloads_volumes_based_on_interval(self, tmp_path):
         """ModalService should reload volumes when interval threshold is exceeded"""
         service = SampleModalService("test-model", tmp_path)
