@@ -142,6 +142,32 @@ def init_project(target_dir: Path, project_name: str) -> None:
     print("  modal deploy app.py   # deploy to Modal")
 
 
+def validate_config(config_path: str | None = None) -> None:
+    """Validate a modalkit.yaml configuration file."""
+    import os
+
+    if config_path:
+        os.environ["MODALKIT_CONFIG"] = config_path
+
+    try:
+        from modalkit.settings import Settings
+
+        settings = Settings()
+    except Exception as e:
+        print(f"Config validation failed: {e}")
+        sys.exit(1)
+
+    app = settings.app_settings
+    models = settings.model_settings
+
+    print("Config OK")
+    print(f"  App prefix:  {app.app_prefix}")
+    print(f"  GPU:         {app.deployment_config.gpu or 'none (CPU)'}")
+    print(f"  Batch size:  {app.batch_config.max_batch_size}")
+    print(f"  Models:      {', '.join(models.model_entries.keys()) or 'none'}")
+    print(f"  Secure:      {app.deployment_config.secure}")
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(prog="modalkit", description="Modalkit CLI")
     subparsers = parser.add_subparsers(dest="command")
@@ -150,10 +176,15 @@ def main(argv: list[str] | None = None) -> None:
     init_parser.add_argument("name", nargs="?", default="my-ml-service", help="Project name (default: my-ml-service)")
     init_parser.add_argument("--dir", default=".", help="Target directory (default: current)")
 
+    validate_parser = subparsers.add_parser("validate", help="Validate modalkit.yaml configuration")
+    validate_parser.add_argument("--config", default=None, help="Config file path (default: modalkit.yaml)")
+
     args = parser.parse_args(argv)
 
     if args.command == "init":
         init_project(Path(args.dir), args.name)
+    elif args.command == "validate":
+        validate_config(args.config)
     else:
         parser.print_help()
         sys.exit(1)
