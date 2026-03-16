@@ -10,8 +10,9 @@ This module tests the Modal service deployment and orchestration functionality, 
 - Queue integration and response handling
 """
 
+import asyncio
 import time
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 from fastapi import HTTPException
@@ -722,3 +723,128 @@ class TestLogQueueResult:
 
         # Should not raise
         service._log_queue_result(task, "test-queue", "failure")
+
+
+class TestFireQueueSend:
+    """Test _fire_queue_send with and without a running event loop"""
+
+    @pytest.mark.asyncio
+    async def test_fire_queue_send_with_running_loop(self, tmp_path):
+        """Should use create_task when event loop is running"""
+        from modalkit.task_queue import InMemoryBackend
+
+        backend = InMemoryBackend()
+        service = SampleModalService("test-model", tmp_path, queue_backend=backend)
+
+        # We're inside an async test, so there IS a running loop
+        service._fire_queue_send("test-queue", '{"msg": "hello"}', "success")
+
+        # Allow the background task to complete
+        await asyncio.sleep(0.05)
+
+    def test_fire_queue_send_without_running_loop(self, tmp_path):
+        """Should fall back to asyncio.run when no event loop is running"""
+        from modalkit.task_queue import InMemoryBackend
+
+        backend = InMemoryBackend()
+        service = SampleModalService("test-model", tmp_path, queue_backend=backend)
+
+        # No event loop running in sync test context
+        service._fire_queue_send("test-queue", '{"msg": "hello"}', "success")
+
+    def test_fire_queue_send_fallback_failure(self, tmp_path):
+        """Should log warning when fallback asyncio.run returns False"""
+        service = SampleModalService("test-model", tmp_path)
+
+        with patch("modalkit.modal_service.send_response_queue", return_value=False):
+            # Should not raise, just log warning
+            service._fire_queue_send("bad-queue", '{"msg": "hello"}', "failure")
+
+
+class TestAsyncCallInnerFunction:
+    """Test the inner function created by async_call"""
+
+    @pytest.mark.asyncio
+    async def test_async_call_with_async_input_model(self):
+        """async_call fn should handle AsyncInputModel and spawn"""
+        mock_call = MagicMock()
+        mock_call.object_id = "job-123"
+
+        mock_spawn = MagicMock()
+        mock_spawn.aio = AsyncMock(return_value=mock_call)
+
+        class MockService(ModalService):
+            def __init__(self):
+                self.process_request = MagicMock()
+                self.process_request.spawn = mock_spawn
+
+        fn = ModalService.async_call(MockService)
+        input_data = AsyncInputModel(
+            message=SampleRequest(text="test"),
+            success_queue="sq",
+            failure_queue="fq",
+            meta={},
+        )
+        result = await fn("test-model", input_data)
+
+        assert result.job_id == "job-123"
+        mock_spawn.aio.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_async_call_with_plain_basemodel_fallback(self):
+        """async_call fn should wrap plain BaseModel in AsyncInputModel"""
+        mock_call = MagicMock()
+        mock_call.object_id = "job-456"
+
+        mock_spawn = MagicMock()
+        mock_spawn.aio = AsyncMock(return_value=mock_call)
+
+        class MockService(ModalService):
+            def __init__(self):
+                self.process_request = MagicMock()
+                self.process_request.spawn = mock_spawn
+
+        fn = ModalService.async_call(MockService)
+        result = await fn("test-model", SampleRequest(text="raw"))
+
+        assert result.job_id == "job-456"
+
+
+class TestSyncCallInnerFunction:
+    """Test the inner function created by sync_call"""
+
+    @pytest.mark.asyncio
+    async def test_sync_call_with_sync_input_model(self):
+        """sync_call fn should handle SyncInputModel and call remote"""
+        expected_result = InferenceOutputModel(status="success")
+        mock_remote = MagicMock()
+        mock_remote.aio = AsyncMock(return_value=[expected_result])
+
+        class MockService(ModalService):
+            def __init__(self):
+                self.process_request = MagicMock()
+                self.process_request.remote = mock_remote
+
+        fn = ModalService.sync_call(MockService)
+        input_data = SyncInputModel(message=SampleRequest(text="test"))
+        result = await fn("test-model", input_data)
+
+        assert result.status == "success"
+        mock_remote.aio.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_sync_call_with_plain_basemodel_fallback(self):
+        """sync_call fn should wrap plain BaseModel in SyncInputModel"""
+        expected_result = InferenceOutputModel(status="success")
+        mock_remote = MagicMock()
+        mock_remote.aio = AsyncMock(return_value=[expected_result])
+
+        class MockService(ModalService):
+            def __init__(self):
+                self.process_request = MagicMock()
+                self.process_request.remote = mock_remote
+
+        fn = ModalService.sync_call(MockService)
+        result = await fn("test-model", SampleRequest(text="raw"))
+
+        assert result.status == "success"
