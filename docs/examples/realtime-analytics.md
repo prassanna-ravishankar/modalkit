@@ -646,11 +646,6 @@ Create `modalkit.yaml`:
 app_settings:
   app_prefix: "realtime-analytics"
 
-  # Authentication
-  auth_config:
-    ssm_key: "/analytics/api-key"
-    auth_header: "x-api-key"
-
   # Container with analytics dependencies
   build_config:
     image: "python:3.11"

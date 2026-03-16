@@ -396,11 +396,6 @@ Create `modalkit.yaml`:
 app_settings:
   app_prefix: "multimodal-ai"
 
-  # Authentication
-  auth_config:
-    ssm_key: "/multimodal-ai/api-key"
-    auth_header: "x-api-key"
-
   # Container with ML dependencies
   build_config:
     image: "python:3.11"

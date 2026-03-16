@@ -82,11 +82,6 @@ Create `modalkit.yaml`:
 app_settings:
   app_prefix: "translation-demo"
 
-  auth_config:
-    # For development - use hardcoded key
-    api_key: "dev-key-123"
-    auth_header: "x-api-key"
-
   build_config:
     image: "python:3.11-slim"
     tag: "latest"

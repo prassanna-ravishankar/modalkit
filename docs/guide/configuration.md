@@ -18,7 +18,6 @@ export MODALKIT_CONFIG="base.yaml,production.yaml"
 ```yaml
 app_settings:
   app_prefix: string          # Prefix for Modal app name
-  auth_config: AuthConfig     # Authentication settings
   build_config: BuildConfig   # Container configuration
   deployment_config: DeploymentConfig  # Runtime settings
   batch_config: BatchConfig   # Batch processing settings
@@ -38,27 +37,6 @@ The prefix for your Modal app name. The full name will be: `{app_prefix}{MODALKI
 ```yaml
 app_settings:
   app_prefix: "my-service"  # Results in "my-service-dev" by default
-```
-
-### auth_config
-Configure authentication for your endpoints.
-
-#### Option 1: API Key Authentication
-```yaml
-auth_config:
-  # Use AWS SSM (recommended for production)
-  ssm_key: "/myapp/api-key"
-  auth_header: "x-api-key"
-
-  # OR hardcode (dev only)
-  # api_key: "sk-12345"
-  # auth_header: "x-api-key"
-```
-
-#### Option 2: Modal Proxy Auth
-```yaml
-deployment_config:
-  secure: true  # Enables Modal proxy authentication
 ```
 
 ### build_config
@@ -244,9 +222,6 @@ export MODALKIT_APP_POSTFIX="-prod"  # Results in "my-service-prod"
 ```yaml
 app_settings:
   app_prefix: "ml-dev"
-  auth_config:
-    api_key: "dev-key"
-    auth_header: "x-api-key"
   build_config:
     image: "python:3.11"
     tag: "latest"
@@ -263,9 +238,6 @@ app_settings:
 ```yaml
 app_settings:
   app_prefix: "ml-prod"
-  auth_config:
-    ssm_key: "/prod/api-key"
-    auth_header: "x-api-key"
   build_config:
     image: "ghcr.io/myorg/ml-base:stable"
     tag: "v1.2.3"

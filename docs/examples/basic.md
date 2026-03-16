@@ -251,11 +251,6 @@ Create `modalkit.yaml`:
 app_settings:
   app_prefix: "sentiment-service"
 
-  # Authentication
-  auth_config:
-    ssm_key: "/sentiment-service/api-key"
-    auth_header: "x-api-key"
-
   # Container configuration
   build_config:
     image: "python:3.11"

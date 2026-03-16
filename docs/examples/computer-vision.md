@@ -309,11 +309,6 @@ Create `modalkit.yaml`:
 app_settings:
   app_prefix: "cv-service"
 
-  # Authentication
-  auth_config:
-    ssm_key: "/cv-service/api-key"
-    auth_header: "x-api-key"
-
   # Container with CV dependencies
   build_config:
     image: "python:3.11"
