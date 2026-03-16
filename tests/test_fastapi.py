@@ -95,6 +95,18 @@ class TestFastAPI:
         assert result.json() == {"result": "test"}
         sync_fn.assert_called_once()
 
+    def test_sync_endpoint_invalid_input(self, setup):
+        """Invalid input should return 422 with validation details"""
+        result = self.client.post("/predict_sync", json={"wrong_field": 123}, params={"model_name": "test_model"})
+        assert result.status_code == 422
+        assert "detail" in result.json()
+
+    def test_async_endpoint_invalid_input(self, setup):
+        """Invalid async input should return 422"""
+        result = self.client.post("/predict_async", json={"wrong_field": 123}, params={"model_name": "test_model"})
+        assert result.status_code == 422
+        assert "detail" in result.json()
+
     def test_health_endpoint(self, setup):
         """Health endpoint should return ok without authentication"""
         result = self.client.get("/health")

@@ -4,7 +4,8 @@ from collections.abc import Awaitable, Callable
 from typing import Any
 
 from fastapi import APIRouter, Body, Depends, FastAPI
-from pydantic import BaseModel
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel, ValidationError
 
 from modalkit.iomodel import AsyncInputModel, AsyncOutputModel, SyncInputModel
 
@@ -41,6 +42,10 @@ def create_app(
     """
     fastapi_deps = [Depends(dep) for dep in dependencies if dep]
     app = FastAPI(dependencies=fastapi_deps)
+
+    @app.exception_handler(ValidationError)
+    async def validation_error_handler(request: Any, exc: ValidationError) -> JSONResponse:
+        return JSONResponse(status_code=422, content={"detail": exc.errors()})
 
     # Create router with optional dependency, otherwise use only Modal proxy auth
     router_dependencies = [Depends(router_dependency)] if router_dependency is not None else []
