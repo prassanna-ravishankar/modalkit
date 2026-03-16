@@ -35,10 +35,9 @@ def create_app(
         FastAPI: Configured FastAPI application with predict routes.
 
     Routes:
+        - `/health` (GET): Health check endpoint (unauthenticated).
         - `/predict_sync` (POST): Synchronous predict endpoint.
-            Processes requests individually.
         - `/predict_async` (POST): Asynchronous predict endpoint.
-            Processes requests using batching based on batch_config settings.
     """
     fastapi_deps = [Depends(dep) for dep in dependencies if dep]
     app = FastAPI(dependencies=fastapi_deps)
@@ -62,6 +61,10 @@ def create_app(
         # Parse as AsyncInputModel
         parsed_request: AsyncInputModel = AsyncInputModel.model_validate(request)
         return await async_fn(model_name, parsed_request)
+
+    @app.get("/health")
+    async def health() -> dict[str, str]:
+        return {"status": "ok"}
 
     app.include_router(authenticated_router)
 

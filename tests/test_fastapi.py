@@ -94,3 +94,28 @@ class TestFastAPI:
         assert result.status_code == 200
         assert result.json() == {"result": "test"}
         sync_fn.assert_called_once()
+
+    def test_health_endpoint(self, setup):
+        """Health endpoint should return ok without authentication"""
+        result = self.client.get("/health")
+        assert result.status_code == 200
+        assert result.json() == {"status": "ok"}
+
+    def test_health_endpoint_no_auth_required(self):
+        """Health endpoint should work even without any auth middleware"""
+        sync_fn = AsyncMock()
+        async_fn = AsyncMock()
+
+        fastapi_app = create_app(
+            input_model=MockInputModel,
+            output_model=MockOutputModel,
+            dependencies=[],
+            router_dependency=None,
+            sync_fn=sync_fn,
+            async_fn=async_fn,
+        )
+
+        client = TestClient(fastapi_app)
+        result = client.get("/health")
+        assert result.status_code == 200
+        assert result.json() == {"status": "ok"}

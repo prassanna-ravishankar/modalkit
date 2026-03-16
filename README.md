@@ -579,6 +579,7 @@ uv run ruff check modalkit/ tests/
 
 | Endpoint | Method | Description | Returns |
 |----------|---------|-------------|----------|
+| `/health` | GET | Health check (unauthenticated) | `{"status": "ok"}` |
 | `/predict_sync` | POST | Synchronous inference | Model output |
 | `/predict_async` | POST | Async inference (queued) | Job ID |
 
