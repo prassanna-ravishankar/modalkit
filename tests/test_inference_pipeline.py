@@ -384,3 +384,60 @@ class TestInferencePipelineContract:
 
         assert pipeline.processed_count == 2
         assert len(results) == 2
+
+
+class TestInferencePipelineTiming:
+    """Test suite for inference pipeline timing/observability"""
+
+    @pytest.fixture
+    def pipeline(self, tmp_path):
+        return TextProcessingPipeline(
+            model_name="timing-test",
+            model_folder=str(tmp_path / "models"),
+            common_settings={},
+        )
+
+    def test_run_inference_returns_timing_info(self, pipeline):
+        """run_inference should return timing information for each stage"""
+        inputs = [SentimentInput(text="test input")]
+        pipeline.run_inference(inputs)
+
+        assert hasattr(pipeline, "last_timing")
+        timing = pipeline.last_timing
+        assert "preprocess_ms" in timing
+        assert "predict_ms" in timing
+        assert "postprocess_ms" in timing
+        assert "total_ms" in timing
+        assert all(isinstance(v, float) for v in timing.values())
+        assert all(v >= 0 for v in timing.values())
+
+    def test_timing_total_is_sum_of_stages(self, pipeline):
+        """Total timing should be approximately the sum of stages"""
+        inputs = [SentimentInput(text="test")]
+        pipeline.run_inference(inputs)
+
+        timing = pipeline.last_timing
+        stage_sum = timing["preprocess_ms"] + timing["predict_ms"] + timing["postprocess_ms"]
+        # Total should be close to sum (allow small overhead for timing calls)
+        assert abs(timing["total_ms"] - stage_sum) < 1.0
+
+    def test_timing_updates_on_each_call(self, pipeline):
+        """Timing should be updated on each run_inference call"""
+        pipeline.run_inference([SentimentInput(text="first")])
+        first_timing = pipeline.last_timing.copy()
+
+        pipeline.run_inference([SentimentInput(text="second")])
+        second_timing = pipeline.last_timing
+
+        # Both should be valid timing dicts (values may differ)
+        assert set(first_timing.keys()) == set(second_timing.keys())
+
+    def test_timing_logged_with_model_name(self, pipeline):
+        """Timing should be logged with the model name for correlation"""
+        with patch("modalkit.inference_pipeline.logger") as mock_logger:
+            pipeline.run_inference([SentimentInput(text="test")])
+
+            # Should log timing info
+            log_calls = [str(call) for call in mock_logger.info.call_args_list]
+            timing_logs = [c for c in log_calls if "timing" in c.lower() or "ms" in c.lower()]
+            assert len(timing_logs) > 0

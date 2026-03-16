@@ -1,6 +1,8 @@
+import time
 from abc import abstractmethod
 from typing import Any
 
+from loguru import logger
 from pydantic import BaseModel
 
 from modalkit.iomodel import InferenceOutputModel
@@ -33,6 +35,7 @@ class InferencePipeline:
         self.common_settings = common_settings
         self.model_name = model_name
         self.all_model_data_folder = all_model_data_folder
+        self.last_timing: dict[str, float] = {}
 
     def on_volume_reload(self) -> None:
         """
@@ -49,6 +52,7 @@ class InferencePipeline:
     def run_inference(self, input_list: list[BaseModel]) -> list[InferenceOutputModel]:
         """
         Runs the full inference pipeline: preprocess -> predict -> postprocess.
+        Records timing for each stage in self.last_timing.
 
         Args:
             input_list (list[BaseModel]): A list of input messages to the inference pipeline.
@@ -56,9 +60,30 @@ class InferencePipeline:
         Returns:
             list[InferenceOutputModel]: The list of final processed results after base_inference.
         """
+        t_start = time.perf_counter()
+
+        t0 = time.perf_counter()
         preprocessed_data = self.preprocess(input_list)
+        t1 = time.perf_counter()
         raw_output = self.predict(input_list, preprocessed_data)
+        t2 = time.perf_counter()
         result = self.postprocess(input_list, raw_output)
+        t3 = time.perf_counter()
+
+        self.last_timing = {
+            "preprocess_ms": (t1 - t0) * 1000,
+            "predict_ms": (t2 - t1) * 1000,
+            "postprocess_ms": (t3 - t2) * 1000,
+            "total_ms": (t3 - t_start) * 1000,
+        }
+        logger.info(
+            f"[{self.model_name}] Inference timing (ms): "
+            f"preprocess={self.last_timing['preprocess_ms']:.1f} "
+            f"predict={self.last_timing['predict_ms']:.1f} "
+            f"postprocess={self.last_timing['postprocess_ms']:.1f} "
+            f"total={self.last_timing['total_ms']:.1f} "
+            f"batch_size={len(input_list)}"
+        )
         return result
 
     @abstractmethod
