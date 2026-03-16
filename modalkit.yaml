@@ -1,6 +1,5 @@
 app_settings:
   app_prefix: "my-ml-service"
-  # Removed auth_config - using Modal proxy auth only
   build_config:
     image: "python:3.11-slim"
     tag: "latest"

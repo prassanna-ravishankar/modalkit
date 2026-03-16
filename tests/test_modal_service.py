@@ -118,7 +118,6 @@ class SampleModalService(ModalService):
         app_settings = AppSettings(
             app_prefix="test-service",
             build_config=BuildConfig(image="test", tag="latest"),
-            # Removed auth_config - using Modal proxy auth only
             deployment_config=DeploymentConfig(volumes={}, volume_reload_interval_seconds=None, secure=False),
             batch_config=BatchConfig(),
         )

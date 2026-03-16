@@ -41,7 +41,6 @@ class TestModalConfigurationBehavior:
             build_config=BuildConfig(
                 image="python", tag="3.11-slim", env={"MODEL_PATH": "/models", "CACHE_SIZE": "1000"}, workdir="/app"
             ),
-            # Removed auth_config - using Modal proxy auth only
             deployment_config=DeploymentConfig(
                 gpu="T4", volumes={}, concurrency_limit=5, container_idle_timeout=300, secure=False
             ),
@@ -75,7 +74,6 @@ class TestModalConfigurationBehavior:
         app_settings = AppSettings(
             app_prefix="ml-service",
             build_config=BuildConfig(image="ml-base", tag="latest"),
-            # Removed auth_config - using Modal proxy auth only
             deployment_config=DeploymentConfig(
                 volumes={"/shared/models": "model-cache"}, cloud_bucket_mounts=cloud_mounts
             ),
@@ -345,9 +343,6 @@ class TestModalConfigurationBehavior:
 
         assert asgi_settings["requires_proxy_auth"] is False
 
-    # Removed CustomAPIKey test - using Modal proxy auth only
-    pass
-
     def test_config_reloads_volumes_safely(self, settings_with_storage: Settings) -> None:
         """ModalConfig should reload volumes with proper error handling"""
         with patch("modal.Volume.from_name") as mock_volume:
@@ -417,7 +412,6 @@ class TestModalConfigurationIntegration:
                 extra_run_commands=["pip install --upgrade torch", "apt-get update"],
                 workdir="/opt/ml",
             ),
-            # Removed auth_config - using Modal proxy auth only
             deployment_config=DeploymentConfig(
                 gpu="A100",
                 volumes={"/cache": "ml-cache-vol", "/var/storage": "temp-vol"},
@@ -472,7 +466,6 @@ class TestModalConfigurationIntegration:
         app_settings = AppSettings(
             app_prefix="test-service",
             build_config=BuildConfig(image="test", tag="latest"),
-            # Removed auth_config - using Modal proxy auth only
             deployment_config=DeploymentConfig(
                 volumes={"/shared/models": "model-cache"}, cloud_bucket_mounts=cloud_mounts
             ),

@@ -27,7 +27,6 @@ def test_load_settings(set_config_path):
 
     # Test that the settings are loaded correctly from the realistic example config
     assert settings.app_settings.app_prefix == "my-ml-service"
-    # Removed auth_config assertion - using Modal proxy auth only
     assert settings.app_settings.build_config.image == "python:3.11-slim"
 
 
