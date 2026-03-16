@@ -491,37 +491,34 @@ for detection in result["predictions"]:
     print(f"  {detection['class_name']}: {detection['confidence']:.3f} at [{bbox[0]:.1f}, {bbox[1]:.1f}, {bbox[2]:.1f}, {bbox[3]:.1f}]")
 ```
 
-### Batch Processing
+### Processing Multiple Images
 
 ```python
 import requests
 import base64
 import os
 
-# Process multiple images
+# Process multiple images individually
 headers = {"x-api-key": "your-api-key"}
 image_folder = "path/to/images/"
 
-batch_requests = []
 for filename in os.listdir(image_folder):
     if filename.lower().endswith(('.jpg', '.jpeg', '.png')):
         image_path = os.path.join(image_folder, filename)
         image_b64 = encode_image(image_path)
-        batch_requests.append({
-            "image": image_b64,
-            "task": "classification",
-            "confidence_threshold": 0.2
-        })
 
-response = requests.post(
-    "https://your-org--cv-service.modal.run/predict_batch",
-    json=batch_requests,
-    headers=headers
-)
+        response = requests.post(
+            "https://your-org--cv-service.modal.run/predict_sync",
+            json={
+                "image": image_b64,
+                "task": "classification",
+                "confidence_threshold": 0.2
+            },
+            headers=headers
+        )
 
-results = response.json()
-for i, result in enumerate(results):
-    print(f"Image {i+1}: {result['predictions'][0]['class_name']} ({result['predictions'][0]['confidence']:.3f})")
+        result = response.json()
+        print(f"{filename}: {result['predictions'][0]['class_name']} ({result['predictions'][0]['confidence']:.3f})")
 ```
 
 ## 5. Advanced Features

@@ -157,11 +157,11 @@ curl -X POST http://localhost:8000/predict_sync \
   -H "x-api-key: dev-key-123" \
   -d '{"text": "Hello world", "language": "en"}'
 
-# Batch endpoint
-curl -X POST http://localhost:8000/predict_batch \
+# Async endpoint
+curl -X POST http://localhost:8000/predict_async \
   -H "Content-Type: application/json" \
   -H "x-api-key: dev-key-123" \
-  -d '[{"text": "Hello"}, {"text": "World"}]'
+  -d '{"message": {"text": "Hello"}, "success_queue": "results", "failure_queue": "errors"}'
 ```
 
 ## Step 5: Deploy to Modal

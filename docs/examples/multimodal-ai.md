@@ -596,16 +596,16 @@ for result in results['results'][0]['search_results']:
     print(f"Score: {result['score']:.3f} - {result['content']}")
 ```
 
-### Batch Multi-Modal Processing
+### Processing Multiple Modalities
 
 ```python
 import requests
 import base64
 
-# Process multiple items with different modalities
+# Process multiple items with different modalities individually
 headers = {"x-api-key": "your-api-key"}
 
-batch_data = [
+items = [
     {
         "text": "A beautiful sunset over the ocean",
         "task": "embedding"
@@ -621,14 +621,14 @@ batch_data = [
     }
 ]
 
-response = requests.post(
-    "https://your-org--multimodal-ai.modal.run/predict_batch",
-    json=batch_data,
-    headers=headers
-)
+for i, item in enumerate(items):
+    response = requests.post(
+        "https://your-org--multimodal-ai.modal.run/predict_sync",
+        json=item,
+        headers=headers
+    )
 
-results = response.json()
-for i, result in enumerate(results):
+    result = response.json()
     print(f"Item {i+1}: {result['task']} - Processed {len(result['metadata']['modalities_processed'])} modalities")
 ```
 
@@ -727,10 +727,6 @@ deployment_config:
 
   # Multiple availability zones
   region: "us-east-1"
-
-  # Health check configuration
-  health_check_path: "/health"
-  health_check_interval: 30
 ```
 
 ### Cost Optimization

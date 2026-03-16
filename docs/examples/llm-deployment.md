@@ -375,23 +375,25 @@ result = response.json()
 print(result["generated_text"])
 ```
 
-### Batch Generation
+### Multiple Generations
 ```python
 import requests
 
 headers = {"x-api-key": "your-api-key"}
-response = requests.post(
-    "https://your-org--llm-service.modal.run/predict_batch",
-    json=[
-        {"prompt": "The meaning of life is", "max_length": 50},
-        {"prompt": "In a world where AI rules", "max_length": 50},
-        {"prompt": "The last human on Earth", "max_length": 50}
-    ],
-    headers=headers
-)
+prompts = [
+    {"prompt": "The meaning of life is", "max_length": 50},
+    {"prompt": "In a world where AI rules", "max_length": 50},
+    {"prompt": "The last human on Earth", "max_length": 50}
+]
 
-results = response.json()
-for result in results:
+for prompt_data in prompts:
+    response = requests.post(
+        "https://your-org--llm-service.modal.run/predict_sync",
+        json=prompt_data,
+        headers=headers
+    )
+
+    result = response.json()
     print(f"Prompt: {result['prompt']}")
     print(f"Generated: {result['generated_text']}")
     print("---")

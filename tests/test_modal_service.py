@@ -28,7 +28,6 @@ from modalkit.modal_config import ModalConfig
 from modalkit.modal_service import ModalService, create_web_endpoints
 from modalkit.settings import (
     AppSettings,
-    # Removed AuthConfig import
     BatchConfig,
     BuildConfig,
     DeploymentConfig,

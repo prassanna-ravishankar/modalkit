@@ -401,14 +401,14 @@ if result['emotions']:
         print(f"  {emotion}: {score:.3f}")
 ```
 
-### Batch Processing
+### Processing Multiple Texts
 
 ```python
 import requests
 
 headers = {"x-api-key": "your-api-key"}
 
-# Analyze multiple texts at once
+# Analyze multiple texts
 texts = [
     {"text": "This is the best day ever!", "include_emotions": True},
     {"text": "I'm feeling really disappointed about this.", "include_emotions": True},
@@ -416,14 +416,14 @@ texts = [
     {"text": "I can't believe how terrible this service is!", "include_emotions": True}
 ]
 
-response = requests.post(
-    "https://your-org--sentiment-service.modal.run/predict_batch",
-    json=texts,
-    headers=headers
-)
+for i, text_data in enumerate(texts):
+    response = requests.post(
+        "https://your-org--sentiment-service.modal.run/predict_sync",
+        json=text_data,
+        headers=headers
+    )
 
-results = response.json()
-for i, result in enumerate(results):
+    result = response.json()
     print(f"Text {i+1}: {result['sentiment']} (score: {result['score']:.2f})")
 ```
 

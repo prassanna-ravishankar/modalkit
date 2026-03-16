@@ -2,7 +2,7 @@
 
 __version__ = "0.1.0"
 
-from modalkit.exceptions import AuthConfigError, BackendError, DependencyError, TypeValidationError
+from modalkit.exceptions import BackendError, DependencyError, TypeValidationError
 from modalkit.inference_pipeline import InferencePipeline
 from modalkit.iomodel import AsyncInputModel, AsyncOutputModel, InferenceOutputModel, SyncInputModel
 from modalkit.modal_config import ModalConfig
@@ -13,7 +13,6 @@ from modalkit.task_queue import QueueBackend
 __all__ = [
     "AsyncInputModel",
     "AsyncOutputModel",
-    "AuthConfigError",
     "BackendError",
     "DependencyError",
     "InferenceOutputModel",
