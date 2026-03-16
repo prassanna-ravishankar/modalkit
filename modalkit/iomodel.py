@@ -22,12 +22,9 @@ class AsyncInputModel(BaseModel, Generic[T]):
 
     Attributes:
         message (T): The actual input data, must be a Pydantic model
-        success_queue (str): SQS queue name for successful results
-        failure_queue (str): SQS queue name for error messages
+        success_queue (str): Queue name for successful results
+        failure_queue (str): Queue name for error messages
         meta (dict): Additional metadata to be passed through the processing pipeline
-
-    Notes:
-        The model_config ensures no extra fields are allowed in the input
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -50,9 +47,6 @@ class SyncInputModel(BaseModel, Generic[T]):
 
     model_config = ConfigDict(extra="forbid")
     message: T
-
-
-# TracedInputModel removed - no longer needed without OpenTelemetry
 
 
 class InferenceOutputModel(BaseModel):
