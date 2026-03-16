@@ -204,3 +204,35 @@ class TestCloudBucketMount:
             )
 
         assert "mount_point" in str(exc_info.value)
+
+
+class TestDeploymentConfigValidation:
+    """Test deployment config validation"""
+
+    def test_negative_volume_reload_interval_becomes_none(self):
+        """Negative volume_reload_interval_seconds should be treated as disabled (None)"""
+        from modalkit.settings import DeploymentConfig
+
+        config = DeploymentConfig(volume_reload_interval_seconds=-1)
+        assert config.volume_reload_interval_seconds is None
+
+    def test_zero_volume_reload_interval_is_allowed(self):
+        """Zero interval should be allowed (reload on every request)"""
+        from modalkit.settings import DeploymentConfig
+
+        config = DeploymentConfig(volume_reload_interval_seconds=0)
+        assert config.volume_reload_interval_seconds == 0
+
+    def test_positive_volume_reload_interval_is_allowed(self):
+        """Positive interval should be kept as-is"""
+        from modalkit.settings import DeploymentConfig
+
+        config = DeploymentConfig(volume_reload_interval_seconds=300)
+        assert config.volume_reload_interval_seconds == 300
+
+    def test_none_volume_reload_interval_is_allowed(self):
+        """None should be kept as-is (disabled)"""
+        from modalkit.settings import DeploymentConfig
+
+        config = DeploymentConfig(volume_reload_interval_seconds=None)
+        assert config.volume_reload_interval_seconds is None

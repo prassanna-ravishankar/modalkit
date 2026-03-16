@@ -3,7 +3,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from pydantic_settings import BaseSettings, PydanticBaseSettingsSource, SettingsConfigDict, YamlConfigSettingsSource
 from pydantic_settings_yaml import YamlBaseSettings  # type: ignore[import-untyped]
 
@@ -98,6 +98,13 @@ class DeploymentConfig(BaseModel):
     allow_concurrent_inputs_handler: int = 10
     secure: bool = False
     cloud_bucket_mounts: list[CloudBucketMount] = Field(default_factory=list)
+
+    @field_validator("volume_reload_interval_seconds")
+    @classmethod
+    def validate_reload_interval(cls, v: int | None) -> int | None:
+        if v is not None and v < 0:
+            return None
+        return v
 
 
 class BatchConfig(BaseModel):

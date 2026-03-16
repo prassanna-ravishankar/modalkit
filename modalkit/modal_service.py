@@ -257,41 +257,31 @@ class ModalService:
             raw_output_data.meta = input_data.meta
 
         if raw_output_data.status == "success":
-            success_queue = input_data.success_queue
-            if success_queue:  # Only send if queue name is provided
-                # Use asyncio.create_task to avoid blocking the batch processing
-                try:
-                    loop = asyncio.get_running_loop()
-                    task = loop.create_task(
-                        self._send_to_queue(success_queue, raw_output_data.model_dump_json(exclude={"error"}))
-                    )
-                    # Don't await - fire and forget to avoid blocking batch processing
-                    task.add_done_callback(lambda t: self._log_queue_result(t, success_queue, "success"))
-                except RuntimeError:
-                    # No running loop, use synchronous fallback
-                    success = asyncio.run(
-                        self._send_to_queue(success_queue, raw_output_data.model_dump_json(exclude={"error"}))
-                    )
-                    if not success:
-                        logger.warning(f"Failed to send success response to queue: {success_queue}")
-            else:
-                logger.debug("No success queue specified, skipping queue response")
+            queue_name = input_data.success_queue
+            message_json = raw_output_data.model_dump_json(exclude={"error"})
+            response_type = "success"
         else:
-            failure_queue = input_data.failure_queue
-            if failure_queue:  # Only send if queue name is provided
-                # Use asyncio.create_task to avoid blocking the batch processing
-                try:
-                    loop = asyncio.get_running_loop()
-                    task = loop.create_task(self._send_to_queue(failure_queue, raw_output_data.model_dump_json()))
-                    # Don't await - fire and forget to avoid blocking batch processing
-                    task.add_done_callback(lambda t: self._log_queue_result(t, failure_queue, "failure"))
-                except RuntimeError:
-                    # No running loop, use synchronous fallback
-                    success = asyncio.run(self._send_to_queue(failure_queue, raw_output_data.model_dump_json()))
-                    if not success:
-                        logger.warning(f"Failed to send failure response to queue: {failure_queue}")
-            else:
-                logger.debug("No failure queue specified, skipping queue response")
+            queue_name = input_data.failure_queue
+            message_json = raw_output_data.model_dump_json()
+            response_type = "failure"
+
+        if not queue_name:
+            logger.debug(f"No {response_type} queue specified, skipping queue response")
+            return
+
+        self._fire_queue_send(queue_name, message_json, response_type)
+
+    def _fire_queue_send(self, queue_name: str, message_json: str, response_type: str) -> None:
+        """Send a message to a queue, using asyncio.create_task if a loop is running, else asyncio.run."""
+        try:
+            loop = asyncio.get_running_loop()
+            task = loop.create_task(self._send_to_queue(queue_name, message_json))
+            task.add_done_callback(lambda t: self._log_queue_result(t, queue_name, response_type))
+        except RuntimeError:
+            # No running loop, use synchronous fallback
+            success = asyncio.run(self._send_to_queue(queue_name, message_json))
+            if not success:
+                logger.warning(f"Failed to send {response_type} response to queue: {queue_name}")
 
     def _log_queue_result(self, task: "asyncio.Task", queue_name: str, response_type: str) -> None:
         """Log the result of a queue sending task."""

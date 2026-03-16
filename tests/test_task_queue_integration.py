@@ -82,3 +82,17 @@ def test_send_response_queue_memory_backend(mock_backend: Mock, mock_settings: M
 
         mock_backend.send_message.assert_called_once_with("test-queue", message)
         assert result is True
+
+
+def test_send_response_queue_asyncio_run_failure(mock_backend: Mock, mock_settings: Mock) -> None:
+    """Test that asyncio.run exceptions are caught and return False"""
+    mock_backend.send_message = AsyncMock(side_effect=RuntimeError("event loop error"))
+
+    with (
+        patch("modalkit.settings.Settings", return_value=mock_settings),
+        patch("modalkit.task_queue.create_backend", return_value=mock_backend),
+    ):
+        message = '{"key": "value"}'
+        result = send_response_queue("test-queue", message)
+
+        assert result is False

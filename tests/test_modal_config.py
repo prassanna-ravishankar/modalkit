@@ -19,12 +19,13 @@ import pytest
 from modalkit.modal_config import ModalConfig
 from modalkit.settings import (
     AppSettings,
-    # Removed AuthConfig import
     BatchConfig,
     BuildConfig,
     CloudBucketMount,
     DeploymentConfig,
     ModelSettings,
+    Mount,
+    MountType,
     Settings,
 )
 
@@ -508,3 +509,114 @@ class TestModalConfigurationIntegration:
 
             # Underlying Modal calls should only happen once for volumes
             mock_volume.assert_called_once()
+
+
+class TestModalConfigImageBuilding:
+    """Test suite for image building edge cases"""
+
+    @patch("modal.Image.debian_slim")
+    def test_extra_run_commands_as_string(self, mock_debian_slim: MagicMock, tmp_path: Path) -> None:
+        """get_image should handle extra_run_commands as a single string"""
+        app_settings = AppSettings(
+            app_prefix="test",
+            build_config=BuildConfig(
+                image="python",
+                tag="3.11",
+                extra_run_commands="pip install torch",
+            ),
+            deployment_config=DeploymentConfig(),
+            batch_config=BatchConfig(),
+        )
+        model_settings = ModelSettings(model_entries={}, local_model_repository_folder=tmp_path, common={})
+        settings = Settings(app_settings=app_settings, model_settings=model_settings)
+
+        mock_image = MagicMock()
+        mock_debian_slim.return_value = mock_image
+        mock_image.env.return_value = mock_image
+        mock_image.run_commands.return_value = mock_image
+        mock_image.workdir.return_value = mock_image
+
+        config = ModalConfig(settings)
+        config.get_image()
+
+        mock_image.run_commands.assert_called_once_with(["pip install torch"])
+
+    @patch("modal.Image.debian_slim")
+    def test_extra_run_commands_as_list(self, mock_debian_slim: MagicMock, tmp_path: Path) -> None:
+        """get_image should handle extra_run_commands as a list"""
+        app_settings = AppSettings(
+            app_prefix="test",
+            build_config=BuildConfig(
+                image="python",
+                tag="3.11",
+                extra_run_commands=["pip install torch", "apt-get update"],
+            ),
+            deployment_config=DeploymentConfig(),
+            batch_config=BatchConfig(),
+        )
+        model_settings = ModelSettings(model_entries={}, local_model_repository_folder=tmp_path, common={})
+        settings = Settings(app_settings=app_settings, model_settings=model_settings)
+
+        mock_image = MagicMock()
+        mock_debian_slim.return_value = mock_image
+        mock_image.env.return_value = mock_image
+        mock_image.run_commands.return_value = mock_image
+        mock_image.workdir.return_value = mock_image
+
+        config = ModalConfig(settings)
+        config.get_image()
+
+        mock_image.run_commands.assert_called_once_with(["pip install torch", "apt-get update"])
+
+    @patch("modal.Image.debian_slim")
+    def test_no_image_defaults_to_debian_slim(self, mock_debian_slim: MagicMock, tmp_path: Path) -> None:
+        """get_image should use debian_slim when no image/tag specified"""
+        app_settings = AppSettings(
+            app_prefix="test",
+            build_config=BuildConfig(image="", tag=""),
+            deployment_config=DeploymentConfig(),
+            batch_config=BatchConfig(),
+        )
+        model_settings = ModelSettings(model_entries={}, local_model_repository_folder=tmp_path, common={})
+        settings = Settings(app_settings=app_settings, model_settings=model_settings)
+
+        mock_image = MagicMock()
+        mock_debian_slim.return_value = mock_image
+        mock_image.env.return_value = mock_image
+        mock_image.run_commands.return_value = mock_image
+        mock_image.workdir.return_value = mock_image
+
+        config = ModalConfig(settings)
+        config.get_image()
+
+        mock_debian_slim.assert_called_once()
+
+    @patch("modal.Image.debian_slim")
+    def test_mounts_file_and_dir(self, mock_debian_slim: MagicMock, tmp_path: Path) -> None:
+        """get_image should add both file and directory mounts"""
+        mounts = [
+            Mount(local_path="config.json", remote_path="/app/config.json", type=MountType.FILE),
+            Mount(local_path="src/", remote_path="/app/src", type=MountType.DIR),
+        ]
+        app_settings = AppSettings(
+            app_prefix="test",
+            build_config=BuildConfig(image="python", tag="3.11"),
+            deployment_config=DeploymentConfig(mounts=mounts),
+            batch_config=BatchConfig(),
+        )
+        model_settings = ModelSettings(model_entries={}, local_model_repository_folder=tmp_path, common={})
+        settings = Settings(app_settings=app_settings, model_settings=model_settings)
+
+        mock_image = MagicMock()
+        mock_debian_slim.return_value = mock_image
+        mock_image.env.return_value = mock_image
+        mock_image.run_commands.return_value = mock_image
+        mock_image.workdir.return_value = mock_image
+        mock_image.add_local_file.return_value = mock_image
+        mock_image.add_local_dir.return_value = mock_image
+
+        config = ModalConfig(settings)
+        config.get_image()
+
+        mock_image.add_local_file.assert_called_once_with("config.json", "/app/config.json")
+        mock_image.add_local_dir.assert_called_once_with("src/", remote_path="/app/src")
