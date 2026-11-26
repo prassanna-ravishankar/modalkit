@@ -270,8 +270,8 @@ app_settings:
   # Deployment configuration
   deployment_config:
     gpu: "T4"  # Cost-effective GPU for transformer models
-    concurrency_limit: 10
-    container_idle_timeout: 600  # 10 minutes
+    max_containers: 10
+    scaledown_window: 600  # 10 minutes
     retries: 3
     memory: 8192  # 8GB RAM
 
@@ -328,6 +328,7 @@ app = modal.App(name=modal_config.app_name)
 
 # Define Modal app class
 @app.cls(**modal_config.get_app_cls_settings())
+@modal.concurrent(**modal_config.get_concurrent_settings())
 class SentimentApp(ModalService):
     inference_implementation = SentimentAnalysisInference
     model_name: str = modal.parameter(default="sentiment_model")
@@ -338,6 +339,7 @@ class SentimentApp(ModalService):
 
 # Create API endpoints
 @app.function(**modal_config.get_handler_settings())
+@modal.concurrent(**modal_config.get_handler_concurrent_settings())
 @modal.asgi_app(**modal_config.get_asgi_app_settings())
 def web_endpoints():
     return create_web_endpoints(
@@ -557,8 +559,8 @@ model_settings:
 # modalkit.yaml - High-performance setup
 deployment_config:
   gpu: "A10G"  # More powerful GPU
-  concurrency_limit: 20
-  container_idle_timeout: 1800  # 30 minutes
+  max_containers: 20
+  scaledown_window: 1800  # 30 minutes
 
 batch_config:
   max_batch_size: 32  # Larger batches
@@ -573,8 +575,8 @@ deployment_config:
   gpu: null  # Use CPU for cost savings
   cpu: 4.0
   memory: 8192
-  concurrency_limit: 15
-  container_idle_timeout: 300  # 5 minutes
+  max_containers: 15
+  scaledown_window: 300  # 5 minutes
 ```
 
 ## 8. Deployment

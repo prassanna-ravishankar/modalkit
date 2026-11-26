@@ -44,7 +44,7 @@ app_settings:
     region: "test"
     gpu: "test-gpu"
     volumes: {}
-    concurrency_limit: 1
+    max_containers: 1
   batch_config:
     max_batch_size: 1
     wait_ms: 0
@@ -77,7 +77,7 @@ app_settings:
     region: "test"
     gpu: "test-gpu"
     volumes: {}
-    concurrency_limit: 1
+    max_containers: 1
   batch_config:
     max_batch_size: 1
     wait_ms: 0
@@ -93,7 +93,7 @@ model_settings:
         """
 app_settings:
   deployment_config:
-    concurrency_limit: 2
+    max_containers: 2
 """
     )
 
@@ -103,7 +103,7 @@ app_settings:
 
     # Test with the new file content
     assert settings.app_settings.app_prefix == "new_prefix"
-    assert settings.app_settings.deployment_config.concurrency_limit == 2
+    assert settings.app_settings.deployment_config.max_containers == 2
 
 
 def test_env_overrides(set_env_vars):
@@ -229,3 +229,29 @@ class TestDeploymentConfigValidation:
 
         config = DeploymentConfig(volume_reload_interval_seconds=None)
         assert config.volume_reload_interval_seconds is None
+
+    @pytest.mark.parametrize(
+        ("old_key", "new_key"),
+        [
+            ("concurrency_limit", "max_containers"),
+            ("container_idle_timeout", "scaledown_window"),
+            ("allow_concurrent_inputs", "max_concurrent_inputs"),
+            ("allow_concurrent_inputs_handler", "max_concurrent_inputs_handler"),
+        ],
+    )
+    def test_removed_modal_keys_name_their_replacement(self, old_key, new_key):
+        """Old modal kwargs in config should fail with an error naming the new key"""
+        from modalkit.settings import DeploymentConfig
+
+        with pytest.raises(ValidationError, match=rf"'{old_key}'.*'{new_key}'"):
+            DeploymentConfig(**{old_key: 1})
+
+    def test_modal_scaling_defaults(self):
+        """Defaults match the previous behaviour under the new names"""
+        from modalkit.settings import DeploymentConfig
+
+        config = DeploymentConfig()
+        assert config.max_containers is None
+        assert config.scaledown_window == 180
+        assert config.max_concurrent_inputs == 1
+        assert config.max_concurrent_inputs_handler == 10

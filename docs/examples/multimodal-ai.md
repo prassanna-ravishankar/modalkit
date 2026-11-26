@@ -420,8 +420,8 @@ app_settings:
   # High-memory GPU deployment
   deployment_config:
     gpu: "A10G"  # Need more VRAM for multi-modal models
-    concurrency_limit: 4
-    container_idle_timeout: 900  # 15 minutes
+    max_containers: 4
+    scaledown_window: 900  # 15 minutes
     retries: 3
     memory: 32768  # 32GB RAM for large models
 
@@ -480,6 +480,7 @@ app = modal.App(name=modal_utils.app_name)
 
 # Define Modal app class
 @app.cls(**modal_utils.get_app_cls_settings())
+@modal.concurrent(**modal_utils.get_concurrent_settings())
 class MultiModalApp(ModalService):
     inference_implementation = MultiModalInference
     model_name: str = modal.parameter(default="multimodal_model")
@@ -487,6 +488,7 @@ class MultiModalApp(ModalService):
 
 # Create endpoints
 @app.function(**modal_utils.get_handler_settings())
+@modal.concurrent(**modal_utils.get_handler_concurrent_settings())
 @modal.asgi_app(**modal_utils.get_asgi_app_settings())
 def web_endpoints():
     return create_web_endpoints(
@@ -722,8 +724,8 @@ class GenerativeMultiModalInference(MultiModalInference):
 ```yaml
 deployment_config:
   gpu: "A100"  # High-end GPU for production
-  concurrency_limit: 8
-  container_idle_timeout: 1800  # 30 minutes
+  max_containers: 8
+  scaledown_window: 1800  # 30 minutes
 
   # Multiple availability zones
   region: "us-east-1"
@@ -735,8 +737,8 @@ deployment_config:
 # Use spot instances for non-critical workloads
 deployment_config:
   gpu: "T4"  # Cost-effective option
-  concurrency_limit: 16
-  container_idle_timeout: 300  # Scale down quickly
+  max_containers: 16
+  scaledown_window: 300  # Scale down quickly
 
   # Preemptible instances
   preemptible: true

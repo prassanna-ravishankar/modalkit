@@ -34,6 +34,7 @@ class MyModel(InferencePipeline):
 
 # Modalkit handles the Modal integration
 @app.cls(**modal_config.get_app_cls_settings())
+@modal.concurrent(**modal_config.get_concurrent_settings())
 class MyApp(ModalService):
     inference_implementation = MyModel
 

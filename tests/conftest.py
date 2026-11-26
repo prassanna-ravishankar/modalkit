@@ -26,13 +26,13 @@ def sample_settings(tmp_path: Path) -> Settings:
         region=None,
         gpu=None,
         volumes=None,
-        concurrency_limit=10,
+        max_containers=10,
         retries=3,
         secrets=["test-secret"],
         mounts=[],
-        container_idle_timeout=300,
-        allow_concurrent_inputs=5,
-        allow_concurrent_inputs_handler=5,
+        scaledown_window=300,
+        max_concurrent_inputs=5,
+        max_concurrent_inputs_handler=5,
     )
 
     queue_config = QueueConfig(backend="sqs", broker_url="memory://")

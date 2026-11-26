@@ -199,8 +199,8 @@ app_settings:
   # GPU deployment
   deployment_config:
     gpu: "T4"  # Use T4 for cost-effective inference, A10G/A100 for larger models
-    concurrency_limit: 5
-    container_idle_timeout: 600  # Keep warm for 10 minutes
+    max_containers: 5
+    scaledown_window: 600  # Keep warm for 10 minutes
     retries: 3
     memory: 16384  # 16GB RAM
 
@@ -259,6 +259,7 @@ app = modal.App(name=modal_utils.app_name)
 
 # Define Modal app class
 @app.cls(**modal_utils.get_app_cls_settings())
+@modal.concurrent(**modal_utils.get_concurrent_settings())
 class LLMApp(ModalService):
     inference_implementation = LLMInference
     model_name: str = modal.parameter(default="llm_model")
@@ -269,6 +270,7 @@ class LLMApp(ModalService):
 
 # Create endpoints
 @app.function(**modal_utils.get_handler_settings())
+@modal.concurrent(**modal_utils.get_handler_concurrent_settings())
 @modal.asgi_app(**modal_utils.get_asgi_app_settings())
 def web_endpoints():
     return create_web_endpoints(
@@ -438,7 +440,7 @@ print(f"Request submitted: {job_id}")
 # For high-throughput scenarios
 deployment_config:
   gpu: "A10G"  # Better for larger models
-  concurrency_limit: 10
+  max_containers: 10
 
 batch_config:
   max_batch_size: 16  # Increase batch size
@@ -450,7 +452,7 @@ batch_config:
 # For cost-sensitive deployments
 deployment_config:
   gpu: "T4"  # Most cost-effective
-  container_idle_timeout: 300  # Shorter timeout
+  scaledown_window: 300  # Shorter timeout
 
 batch_config:
   max_batch_size: 32  # Maximize batch efficiency

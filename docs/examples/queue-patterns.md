@@ -178,6 +178,7 @@ modal_config = ModalConfig()
 app = modal.App(name="text-processing-with-taskiq")
 
 @app.cls(**modal_config.get_app_cls_settings())
+@modal.concurrent(**modal_config.get_concurrent_settings())
 class TextProcessingApp(ModalService):
     inference_implementation = SimplePipeline
     model_name: str = modal.parameter(default="text-processor")
@@ -185,6 +186,7 @@ class TextProcessingApp(ModalService):
     queue_backend = taskiq_backend
 
 @app.function(**modal_config.get_handler_settings())
+@modal.concurrent(**modal_config.get_handler_concurrent_settings())
 @modal.asgi_app()
 def web_endpoints():
     return create_web_endpoints(

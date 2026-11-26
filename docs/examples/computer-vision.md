@@ -330,8 +330,8 @@ app_settings:
   # GPU deployment for CV workloads
   deployment_config:
     gpu: "T4"  # T4 is good for most CV tasks, A10G for larger models
-    concurrency_limit: 8
-    container_idle_timeout: 600
+    max_containers: 8
+    scaledown_window: 600
     retries: 3
     memory: 16384  # 16GB RAM for image processing
 
@@ -396,6 +396,7 @@ app = modal.App(name=modal_utils.app_name)
 
 # Define Modal app class
 @app.cls(**modal_utils.get_app_cls_settings())
+@modal.concurrent(**modal_utils.get_concurrent_settings())
 class CVApp(ModalService):
     inference_implementation = ComputerVisionInference
     model_name: str = modal.parameter(default="cv_model")
@@ -403,6 +404,7 @@ class CVApp(ModalService):
 
 # Create endpoints
 @app.function(**modal_utils.get_handler_settings())
+@modal.concurrent(**modal_utils.get_handler_concurrent_settings())
 @modal.asgi_app(**modal_utils.get_asgi_app_settings())
 def web_endpoints():
     return create_web_endpoints(
@@ -593,7 +595,7 @@ class MonitoredVisionInference(ComputerVisionInference):
 ```yaml
 deployment_config:
   gpu: "A10G"  # More powerful GPU for large models
-  concurrency_limit: 4  # Lower limit for GPU memory
+  max_containers: 4  # Lower limit for GPU memory
 
 batch_config:
   max_batch_size: 8  # Smaller batches for GPU memory constraints
@@ -603,8 +605,8 @@ batch_config:
 
 ```yaml
 deployment_config:
-  concurrency_limit: 20
-  container_idle_timeout: 300  # Scale down quickly
+  max_containers: 20
+  scaledown_window: 300  # Scale down quickly
 
   # Use cheaper instances for light workloads
   cpu: 8.0

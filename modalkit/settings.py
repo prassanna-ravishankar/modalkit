@@ -3,7 +3,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, PydanticBaseSettingsSource, SettingsConfigDict, YamlConfigSettingsSource
 from pydantic_settings_yaml import YamlBaseSettings  # type: ignore[import-untyped]
 
@@ -65,6 +65,15 @@ class CloudBucketMount(BaseModel):
     requester_pays: bool = False
 
 
+# Keys removed when modal renamed its autoscaling and concurrency options
+REMOVED_DEPLOYMENT_KEYS = {
+    "concurrency_limit": "max_containers",
+    "container_idle_timeout": "scaledown_window",
+    "allow_concurrent_inputs": "max_concurrent_inputs",
+    "allow_concurrent_inputs_handler": "max_concurrent_inputs_handler",
+}
+
+
 class DeploymentConfig(BaseModel):
     """
     Represents the deployment configuration for a model.
@@ -74,13 +83,13 @@ class DeploymentConfig(BaseModel):
         volumes (Optional[dict[str, str]]): Volume configuration for the deployment
         volume_reload_interval_seconds (Optional[int]): Time interval in seconds after which
             volumes should be reloaded (None means no auto-reload)
-        concurrency_limit (Optional[int]): Concurrency limit for the deployment
+        max_containers (Optional[int]): Upper limit on containers for the app class
         retries (int): Number of retries for the deployment
         secrets (list[str]): List of secrets for the deployment
         mounts (list[Mount]): List of mounts for the deployment
-        container_idle_timeout (int): Container idle timeout for the deployment
-        allow_concurrent_inputs (int): Allow concurrent inputs for the deployment
-        allow_concurrent_inputs_handler (int): Allow concurrent inputs handler for the deployment
+        scaledown_window (int): Seconds an idle container stays up before scaling down
+        max_concurrent_inputs (int): Inputs one app class container handles at once (@modal.concurrent)
+        max_concurrent_inputs_handler (int): Inputs one web handler container handles at once (@modal.concurrent)
         secure (bool): Enable Modal proxy authentication requiring Modal-Key and Modal-Secret headers
         cloud_bucket_mounts (list[CloudBucketMount]): List of cloud bucket mounts for the deployment
     """
@@ -91,15 +100,24 @@ class DeploymentConfig(BaseModel):
     gpu: str | list[str] | None = None
     volumes: dict[str, str] | None = None
     volume_reload_interval_seconds: int | None = None
-    concurrency_limit: int | None = None
+    max_containers: int | None = None
     retries: int = 1
     secrets: list[str] = Field(default_factory=list)
     mounts: list[Mount] = Field(default_factory=list)
-    container_idle_timeout: int = 180
-    allow_concurrent_inputs: int = 1
-    allow_concurrent_inputs_handler: int = 10
+    scaledown_window: int = 180
+    max_concurrent_inputs: int = 1
+    max_concurrent_inputs_handler: int = 10
     secure: bool = False
     cloud_bucket_mounts: list[CloudBucketMount] = Field(default_factory=list)
+
+    @model_validator(mode="before")
+    @classmethod
+    def reject_removed_modal_keys(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            for old, new in REMOVED_DEPLOYMENT_KEYS.items():
+                if old in data:
+                    raise ValueError(f"'{old}' was removed with modal's 1.x API; use '{new}' instead")
+        return data
 
     @field_validator("volume_reload_interval_seconds")
     @classmethod
