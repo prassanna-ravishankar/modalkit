@@ -22,7 +22,7 @@ dependencies = [
     "loguru>=0.7.0",
     "boto3>=1.35.71",
     "fastapi>=0.115.5",
-    "modal>=0.67.2",
+    "modal>=0.73.132",
     "pydantic-settings>=2.6.1",
 ]
 

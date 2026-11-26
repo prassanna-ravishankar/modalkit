@@ -670,8 +670,8 @@ app_settings:
   # High-performance deployment
   deployment_config:
     gpu: null  # CPU-based analytics
-    concurrency_limit: 20
-    container_idle_timeout: 300
+    max_containers: 20
+    scaledown_window: 300
     retries: 3
     memory: 16384  # 16GB RAM for data processing
     cpu: 8.0       # 8 CPU cores
@@ -733,6 +733,7 @@ app = modal.App(name=modal_utils.app_name)
 
 # Define Modal app class
 @app.cls(**modal_utils.get_app_cls_settings())
+@modal.concurrent(**modal_utils.get_concurrent_settings())
 class AnalyticsApp(ModalService):
     inference_implementation = RealTimeAnalyticsInference
     model_name: str = modal.parameter(default="analytics_model")
@@ -740,6 +741,7 @@ class AnalyticsApp(ModalService):
 
 # Create endpoints
 @app.function(**modal_utils.get_handler_settings())
+@modal.concurrent(**modal_utils.get_handler_concurrent_settings())
 @modal.asgi_app(**modal_utils.get_asgi_app_settings())
 def web_endpoints():
     return create_web_endpoints(

@@ -9,10 +9,14 @@ small module and imports it.
 """
 
 import importlib.util
+import sys
 import textwrap
 from pathlib import Path
 from types import ModuleType
 
+import pytest
+
+from modalkit.cli import init_project
 from modalkit.modal_service import ModalService
 
 
@@ -52,3 +56,52 @@ def test_service_with_parameter_decorates_with_real_modal(tmp_path: Path) -> Non
     module = import_module_from(app_file, "it_param_app")
 
     assert "ParamService" in module.app.registered_classes
+
+
+FULL_DEPLOYMENT_CONFIG = """\
+app_settings:
+  app_prefix: "it-full"
+  build_config:
+    image: "python"
+    tag: "3.12-slim"
+  deployment_config:
+    region: "us-east"
+    gpu: "T4"
+    volumes:
+      /models: "it-models"
+    cloud_bucket_mounts:
+      - mount_point: "/bucket"
+        bucket_name: "it-bucket"
+        secret: "aws"
+    max_containers: 3
+    scaledown_window: 120
+    max_concurrent_inputs: 2
+    max_concurrent_inputs_handler: 8
+    retries: 2
+    secrets: ["it-secret"]
+    secure: true
+  batch_config:
+    max_batch_size: 4
+    wait_ms: 10
+model_settings:
+  local_model_repository_folder: "./models"
+  common: {}
+  model_entries:
+    it_project_model: {}
+"""
+
+
+@pytest.mark.parametrize("config", ["scaffold", "full"])
+def test_scaffolded_app_decorates_with_real_modal(config: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """`modalkit init` output must import against the installed modal, for every deployment option"""
+    init_project(tmp_path, "it-project")
+    if config == "full":
+        (tmp_path / "modalkit.yaml").write_text(FULL_DEPLOYMENT_CONFIG)
+    monkeypatch.setenv("MODALKIT_CONFIG", str(tmp_path / "modalkit.yaml"))
+    monkeypatch.syspath_prepend(str(tmp_path))
+    monkeypatch.delitem(sys.modules, "model", raising=False)
+
+    module = import_module_from(tmp_path / "app.py", f"it_project_app_{config}")
+
+    assert "MyApp" in module.app.registered_classes
+    assert "web_endpoints" in module.app.registered_functions

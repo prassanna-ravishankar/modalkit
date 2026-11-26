@@ -200,7 +200,7 @@ class ModalConfig:
             dict: Application settings with None values removed, including:
                 - Container image configuration (with local mounts embedded)
                 - GPU requirements
-                - Secrets and concurrency settings
+                - Secrets and autoscaling settings
                 - Volume configurations
         """
         settings = {
@@ -208,9 +208,8 @@ class ModalConfig:
             "image": self.get_image(),
             "gpu": self.app_settings.deployment_config.gpu,
             "secrets": [modal.Secret.from_name(secret) for secret in self.app_settings.deployment_config.secrets],
-            "concurrency_limit": self.app_settings.deployment_config.concurrency_limit,
-            "allow_concurrent_inputs": self.app_settings.deployment_config.allow_concurrent_inputs,
-            "container_idle_timeout": self.app_settings.deployment_config.container_idle_timeout,
+            "max_containers": self.app_settings.deployment_config.max_containers,
+            "scaledown_window": self.app_settings.deployment_config.scaledown_window,
             "retries": self.app_settings.deployment_config.retries,
             "volumes": self.all_volumes,
         }
@@ -224,15 +223,29 @@ class ModalConfig:
             dict: Handler settings including:
                 - Application image (with local mounts embedded)
                 - Required secrets
-                - Concurrency settings
         """
-        settings = {
+        return {
             "image": self.get_image(),
             "secrets": [modal.Secret.from_name(secret) for secret in self.app_settings.deployment_config.secrets],
-            "allow_concurrent_inputs": self.app_settings.deployment_config.allow_concurrent_inputs_handler,
         }
 
-        return settings
+    def get_concurrent_settings(self) -> dict[str, Any]:
+        """
+        Gets @modal.concurrent settings for the app class.
+
+        Returns:
+            dict: kwargs for ``@modal.concurrent``, applied below ``@app.cls``
+        """
+        return {"max_inputs": self.app_settings.deployment_config.max_concurrent_inputs}
+
+    def get_handler_concurrent_settings(self) -> dict[str, Any]:
+        """
+        Gets @modal.concurrent settings for the web endpoint handler.
+
+        Returns:
+            dict: kwargs for ``@modal.concurrent``, applied below ``@app.function``
+        """
+        return {"max_inputs": self.app_settings.deployment_config.max_concurrent_inputs_handler}
 
     def get_batched_method_settings(self) -> dict[str, Any]:
         """

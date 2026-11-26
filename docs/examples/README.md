@@ -233,8 +233,8 @@ modal setup
 ```yaml
 deployment_config:
   gpu: null
-  concurrency_limit: 1
-  container_idle_timeout: 300
+  max_containers: 1
+  scaledown_window: 300
   secure: false
 ```
 
@@ -242,8 +242,8 @@ deployment_config:
 ```yaml
 deployment_config:
   gpu: "T4"  # or A10G/A100 for heavier workloads
-  concurrency_limit: 10
-  container_idle_timeout: 900
+  max_containers: 10
+  scaledown_window: 900
   secure: true
   retries: 3
 ```
@@ -252,8 +252,8 @@ deployment_config:
 ```yaml
 deployment_config:
   gpu: "A100"
-  concurrency_limit: 50
-  container_idle_timeout: 1800
+  max_containers: 50
+  scaledown_window: 1800
   memory: 32768
   retries: 5
 ```

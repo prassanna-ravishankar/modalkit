@@ -42,7 +42,7 @@ class TestModalConfigurationBehavior:
                 image="python", tag="3.11-slim", env={"MODEL_PATH": "/models", "CACHE_SIZE": "1000"}, workdir="/app"
             ),
             deployment_config=DeploymentConfig(
-                gpu="T4", volumes={}, concurrency_limit=5, container_idle_timeout=300, secure=False
+                gpu="T4", volumes={}, max_containers=5, scaledown_window=300, secure=False
             ),
             batch_config=BatchConfig(max_batch_size=10, wait_ms=100),
         )
@@ -280,14 +280,14 @@ class TestModalConfigurationBehavior:
             # Verify required settings are present
             assert "image" in app_settings
             assert "gpu" in app_settings
-            assert "concurrency_limit" in app_settings
-            assert "container_idle_timeout" in app_settings
+            assert "max_containers" in app_settings
+            assert "scaledown_window" in app_settings
             assert "retries" in app_settings
 
             # Verify values match configuration
             assert app_settings["gpu"] == "T4"
-            assert app_settings["concurrency_limit"] == 5
-            assert app_settings["container_idle_timeout"] == 300
+            assert app_settings["max_containers"] == 5
+            assert app_settings["scaledown_window"] == 300
 
     def test_config_filters_none_values_from_settings(self, basic_settings: Settings) -> None:
         """ModalConfig should exclude None values from generated settings"""
@@ -313,7 +313,26 @@ class TestModalConfigurationBehavior:
             assert "image" in handler_settings
             assert "secrets" in handler_settings
             # Note: mounts are now embedded in the image (Modal 1.0 API), not a separate field
-            assert "allow_concurrent_inputs" in handler_settings
+            # Concurrency is applied via @modal.concurrent, not as a function kwarg
+            assert "allow_concurrent_inputs" not in handler_settings
+
+    def test_config_drops_removed_modal_kwargs(self, basic_settings: Settings) -> None:
+        """Generated kwargs must only use names that modal's App.cls/App.function accept"""
+        with patch.object(ModalConfig, "get_image"), patch("modal.Secret.from_name"):
+            config = ModalConfig(basic_settings)
+            removed = {"concurrency_limit", "container_idle_timeout", "allow_concurrent_inputs", "keep_warm"}
+            assert removed.isdisjoint(config.get_app_cls_settings())
+            assert removed.isdisjoint(config.get_handler_settings())
+
+    def test_config_generates_concurrent_settings(self, basic_settings: Settings) -> None:
+        """ModalConfig should provide @modal.concurrent kwargs for the app class and the handler"""
+        basic_settings.app_settings.deployment_config.max_concurrent_inputs = 4
+        basic_settings.app_settings.deployment_config.max_concurrent_inputs_handler = 16
+
+        config = ModalConfig(basic_settings)
+
+        assert config.get_concurrent_settings() == {"max_inputs": 4}
+        assert config.get_handler_concurrent_settings() == {"max_inputs": 16}
 
     def test_config_generates_batch_settings(self, basic_settings: Settings) -> None:
         """ModalConfig should provide batch processing configuration"""
@@ -416,10 +435,10 @@ class TestModalConfigurationIntegration:
                 gpu="A100",
                 volumes={"/cache": "ml-cache-vol", "/var/storage": "temp-vol"},
                 cloud_bucket_mounts=cloud_mounts,
-                concurrency_limit=20,
+                max_containers=20,
                 retries=3,
                 secrets=["ml-service-secrets", "database-credentials"],
-                container_idle_timeout=600,
+                scaledown_window=600,
                 secure=True,
             ),
             batch_config=BatchConfig(max_batch_size=50, wait_ms=200),
@@ -449,7 +468,7 @@ class TestModalConfigurationIntegration:
 
             app_settings_dict: dict[str, Any] = config.get_app_cls_settings()
             assert app_settings_dict["gpu"] == "A100"
-            assert app_settings_dict["concurrency_limit"] == 20
+            assert app_settings_dict["max_containers"] == 20
             assert len(app_settings_dict["secrets"]) == 2
 
             batch_settings = config.get_batched_method_settings()

@@ -152,6 +152,7 @@ from modalkit.modal_config import ModalConfig
 app = modal.App(name="sentiment-service")
 
 @app.cls(**modal_config.get_app_cls_settings())
+@modal.concurrent(**modal_config.get_concurrent_settings())
 class SentimentApp(ModalService):
     inference_implementation = SentimentPipeline
     model_name: str = modal.parameter(default="sentiment-analyzer")
@@ -160,6 +161,7 @@ class SentimentApp(ModalService):
     queue_backend = TaskIQBackend("redis://localhost:6379") if USE_TASKIQ else None
 
 @app.function(**modal_config.get_handler_settings())
+@modal.concurrent(**modal_config.get_handler_concurrent_settings())
 @modal.asgi_app()
 def web_endpoints():
     return create_web_endpoints(

@@ -148,6 +148,7 @@ app = modal.App(name=modal_config.app_name)
 
 # Define your Modal app class
 @app.cls(**modal_config.get_app_cls_settings())
+@modal.concurrent(**modal_config.get_concurrent_settings())
 class TranslationApp(ModalService):
     inference_implementation = TranslationModel
     model_name: str = modal.parameter(default="translation_model")
@@ -158,6 +159,7 @@ class TranslationApp(ModalService):
 
 # Create API endpoints
 @app.function(**modal_config.get_handler_settings())
+@modal.concurrent(**modal_config.get_handler_concurrent_settings())
 @modal.asgi_app(**modal_config.get_asgi_app_settings())
 def web_endpoints():
     return create_web_endpoints(
@@ -189,8 +191,8 @@ app_settings:
   # Deployment settings
   deployment_config:
     gpu: "T4"  # Options: T4, A10G, A100, or null for CPU
-    concurrency_limit: 10
-    container_idle_timeout: 300
+    max_containers: 10
+    scaledown_window: 300
     secure: false  # Set to true for Modal proxy auth
 
     # Cloud storage mounts (optional)
@@ -336,8 +338,8 @@ deployment_config:
   gpu: "T4"  # T4, A10G, A100, H100, or null
 
   # Resource limits
-  concurrency_limit: 10
-  container_idle_timeout: 300
+  max_containers: 10
+  scaledown_window: 300
   retries: 3
 
   # Memory/CPU (when gpu is null)

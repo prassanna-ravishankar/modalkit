@@ -29,12 +29,14 @@ modal_config = ModalConfig()
 app = modal.App(name=modal_config.app_name)
 
 @app.cls(**modal_config.get_app_cls_settings())
+@modal.concurrent(**modal_config.get_concurrent_settings())
 class MyApp(ModalService):
     inference_implementation = MyInference
     model_name: str = modal.parameter(default="my_model")
     modal_utils: ModalConfig = modal_config
 
 @app.function(**modal_config.get_handler_settings())
+@modal.concurrent(**modal_config.get_handler_concurrent_settings())
 @modal.asgi_app()
 def web_endpoints():
     return create_web_endpoints(
@@ -53,8 +55,8 @@ app_settings:
   deployment_config:
     region: "us-west-2"           # Optional: Deployment region
     gpu: "T4"                     # Optional: GPU type or list of types
-    concurrency_limit: 5          # Optional: Maximum concurrent requests
-    container_idle_timeout: 180   # Optional: Timeout in seconds
+    max_containers: 5          # Optional: Maximum containers
+    scaledown_window: 180   # Optional: Idle seconds before scale-down
 ```
 
 ### 3. Deploy
@@ -138,9 +140,9 @@ Control request handling:
 ```yaml
 app_settings:
   deployment_config:
-    concurrency_limit: 5  # Maximum concurrent requests
-    allow_concurrent_inputs: 1  # Concurrent inputs per instance
-    allow_concurrent_inputs_handler: 10  # Handler concurrency
+    max_containers: 5  # Maximum containers
+    max_concurrent_inputs: 1  # Concurrent inputs per instance
+    max_concurrent_inputs_handler: 10  # Handler concurrency
   batch_config:
     max_batch_size: 1  # Maximum number of messages in an async inference batch
     wait_ms: 1000  # Maximum wait time in milliseconds to trigger a batch

@@ -71,9 +71,9 @@ deployment_config:
   gpu: "T4"  # Options: T4, A10G, A100, H100, null (CPU only)
 
   # Concurrency settings
-  concurrency_limit: 10  # Max concurrent containers
-  allow_concurrent_inputs: 5  # Inputs per container
-  container_idle_timeout: 300  # Seconds before shutdown
+  max_containers: 10  # Max containers
+  max_concurrent_inputs: 5  # Inputs per container
+  scaledown_window: 300  # Idle seconds before scale-down
 
   # CPU/Memory (when gpu is null)
   memory: 8192  # MB
@@ -110,6 +110,8 @@ deployment_config:
       key_prefix: "v1/"
       read_only: true
 ```
+
+`max_containers` and `scaledown_window` are passed to `@app.cls` by `get_app_cls_settings()`. Per-container concurrency uses Modal's `@modal.concurrent` decorator: apply `@modal.concurrent(**modal_config.get_concurrent_settings())` below `@app.cls`, and `@modal.concurrent(**modal_config.get_handler_concurrent_settings())` below the web endpoint's `@app.function`. `max_concurrent_inputs` (default 1) and `max_concurrent_inputs_handler` (default 10) set their `max_inputs`. The pre-1.0 keys `concurrency_limit`, `container_idle_timeout`, `allow_concurrent_inputs` and `allow_concurrent_inputs_handler` are rejected with an error naming the replacement.
 
 ### batch_config
 Configure batch processing behavior.
@@ -227,7 +229,7 @@ app_settings:
     tag: "latest"
   deployment_config:
     gpu: null
-    concurrency_limit: 1
+    max_containers: 1
     secure: false
   batch_config:
     max_batch_size: 1
@@ -243,7 +245,7 @@ app_settings:
     tag: "v1.2.3"
   deployment_config:
     gpu: "A100"
-    concurrency_limit: 50
+    max_containers: 50
     secure: true  # Use Modal proxy auth
     cloud_bucket_mounts:
       - mount_point: "/mnt/models"

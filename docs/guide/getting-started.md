@@ -102,8 +102,8 @@ app_settings:
   deployment_config:
     # No GPU for this example
     gpu: null
-    concurrency_limit: 10
-    container_idle_timeout: 300
+    max_containers: 10
+    scaledown_window: 300
     # Use Modal proxy auth in production
     secure: false
 
@@ -136,6 +136,7 @@ app = modal.App(name=modal_config.app_name)
 
 # Define Modal app class
 @app.cls(**modal_config.get_app_cls_settings())
+@modal.concurrent(**modal_config.get_concurrent_settings())
 class TranslationApp(ModalService):
     inference_implementation = TranslationModel
     model_name: str = modal.parameter(default="translation_model")
@@ -143,6 +144,7 @@ class TranslationApp(ModalService):
 
 # Create API endpoints
 @app.function(**modal_config.get_handler_settings())
+@modal.concurrent(**modal_config.get_handler_concurrent_settings())
 @modal.asgi_app(**modal_config.get_asgi_app_settings())
 def web_endpoints():
     return create_web_endpoints(
