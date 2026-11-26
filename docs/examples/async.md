@@ -70,9 +70,10 @@ class TaskIQBackend:
         await process_ml_result.kiq(message)
         return True
 
-# Inject TaskIQ backend
-taskiq_backend = TaskIQBackend("redis://localhost:6379")
-service = MyService(queue_backend=taskiq_backend)
+# Set the backend on your service class
+class MyService(ModalService):
+    inference_implementation = MyInferencePipeline
+    queue_backend = TaskIQBackend("redis://localhost:6379")
 ```
 
 ### 4. Custom Queue Implementation
@@ -86,7 +87,9 @@ class MyCustomQueueBackend:
         await my_queue_system.send(queue_name, message)
         return True
 
-service = MyService(queue_backend=MyCustomQueueBackend())
+class MyService(ModalService):
+    inference_implementation = MyInferencePipeline
+    queue_backend = MyCustomQueueBackend()
 ```
 
 ## Complete Example
@@ -145,26 +148,16 @@ import modal
 from modalkit.modal_service import ModalService, create_web_endpoints
 from modalkit.modal_config import ModalConfig
 
-class SentimentService(ModalService):
-    inference_implementation = SentimentPipeline
-
-    def __init__(self, queue_backend=None):
-        super().__init__(queue_backend=queue_backend)
-        self.model_name = "sentiment-analyzer"
-
-# Setup with TaskIQ (optional)
-if USE_TASKIQ:
-    taskiq_backend = TaskIQBackend("redis://localhost:6379")
-    app_cls = lambda: SentimentService(queue_backend=taskiq_backend)
-else:
-    app_cls = SentimentService
-
 # Modal configuration
 app = modal.App(name="sentiment-service")
 
 @app.cls(**modal_config.get_app_cls_settings())
-class SentimentApp(app_cls):
+class SentimentApp(ModalService):
+    inference_implementation = SentimentPipeline
+    model_name: str = modal.parameter(default="sentiment-analyzer")
     modal_utils: ModalConfig = modal_config
+    # Optional: TaskIQ backend; without it, queue_config in modalkit.yaml is used
+    queue_backend = TaskIQBackend("redis://localhost:6379") if USE_TASKIQ else None
 
 @app.function(**modal_config.get_handler_settings())
 @modal.asgi_app()

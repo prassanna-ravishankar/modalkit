@@ -110,7 +110,8 @@ class SampleModalService(ModalService):
     inference_implementation = MockInferencePipeline
 
     def __init__(self, model_name: str, tmp_path=None, queue_backend=None, **inference_kwargs):
-        super().__init__(queue_backend=queue_backend)
+        if queue_backend is not None:
+            self.queue_backend = queue_backend
         self.model_name = model_name
         self.base_inference_kwargs = inference_kwargs
 
@@ -158,6 +159,18 @@ class TestModalServiceLifecycle:
 
         assert service.queue_backend is custom_backend
         assert service.model_name == "sentiment-model"
+
+    def test_queue_backend_is_a_class_attribute(self, tmp_path):
+        """Subclasses configure the queue backend on the class, like inference_implementation"""
+        from modalkit.task_queue import InMemoryBackend
+
+        backend = InMemoryBackend()
+
+        class QueuedService(SampleModalService):
+            queue_backend = backend
+
+        assert ModalService.queue_backend is None
+        assert QueuedService("sentiment-model", tmp_path).queue_backend is backend
 
     def test_service_loads_artifacts_on_startup(self, tmp_path):
         """ModalService should load model artifacts during startup"""

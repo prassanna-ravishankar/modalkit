@@ -32,79 +32,42 @@ class ModalService:
     handling model loading, inference, and API endpoint creation. It integrates
     with the InferencePipeline class to standardize model serving.
 
-    The queue backend is fully optional and supports dependency injection for
-    maximum flexibility:
+    Modal constructs service instances itself (passing only ``modal.parameter()`` values),
+    so a service is configured through class attributes rather than constructor arguments.
 
-    **Usage Examples:**
+    The queue backend is optional:
 
-    1. **No Queues (Default):**
+    1. **No queue backend (default):** async responses are sent through the backend
+       configured in ``modalkit.yaml`` (``queue_config``), if any.
     ```python
     class MyService(ModalService):
         inference_implementation = MyInferencePipeline
-
-    service = MyService()  # No queues, async requests just don't send responses
     ```
 
-    2. **Configuration-Based Queues:**
+    2. **Custom backend:** set ``queue_backend`` to any object implementing the
+       ``QueueBackend`` protocol (``async send_message(queue_name, message) -> bool``).
     ```python
-    # Uses modalkit.yaml settings for queue configuration
-    service = MyService()  # Automatically uses configured backend (SQS, etc.)
-    ```
-
-    3. **Dependency Injection with TaskIQ:**
-    ```python
-    from taskiq_redis import AsyncRedisTaskiqBroker
-
-    class TaskIQBackend:
-        def __init__(self, broker_url="redis://localhost:6379"):
-            self.broker = AsyncRedisTaskiqBroker(broker_url)
-
+    class MyQueue:
         async def send_message(self, queue_name: str, message: str) -> bool:
-            @self.broker.task(task_name=f"process_{queue_name}")
-            async def process_message(msg: str) -> None:
-                # Your custom task processing logic
-                logger.info(f"Processing: {msg}")
-
-            await process_message.kiq(message)
-            return True
-
-    # Inject your TaskIQ backend
-    taskiq_backend = TaskIQBackend("redis://localhost:6379")
-    service = MyService(queue_backend=taskiq_backend)
-    ```
-
-    4. **Custom Queue Implementation:**
-    ```python
-    class MyCustomQueue:
-        async def send_message(self, queue_name: str, message: str) -> bool:
-            # Send to your custom queue system (RabbitMQ, Kafka, etc.)
             await my_queue_system.send(queue_name, message)
             return True
 
-    service = MyService(queue_backend=MyCustomQueue())
+    class MyService(ModalService):
+        inference_implementation = MyInferencePipeline
+        queue_backend = MyQueue()
     ```
 
     Attributes:
         model_name (str): Name of the model to be served
         inference_implementation (type[InferencePipeline]): Implementation class of the inference pipeline
         modal_utils (ModalConfig): Modal config object, containing the settings and config functions
-        queue_backend (Optional[QueueBackend]): Optional queue backend for dependency injection
+        queue_backend (Optional[QueueBackend]): Queue backend for async responses; overrides queue_config
     """
 
     model_name: str
     inference_implementation: type[InferencePipeline]
     modal_utils: ModalConfig
     queue_backend: QueueBackend | None = None
-
-    def __init__(self, queue_backend: QueueBackend | None = None):
-        """
-        Initialize ModalService with optional queue backend.
-
-        Args:
-            queue_backend: Optional queue backend for dependency injection.
-                          If None, will use configuration-based approach or skip queues.
-        """
-        self.queue_backend = queue_backend
 
     @modal.enter()
     def load_artefacts(self) -> None:

@@ -249,10 +249,8 @@ class SentimentService(ModalService):
     """Sentiment analysis service with TaskIQ integration"""
 
     inference_implementation = SentimentPipeline
-
-    def __init__(self, queue_backend=None):
-        super().__init__(queue_backend=queue_backend)
-        self.model_name = "sentiment-analyzer"
+    model_name = "sentiment-analyzer"
+    queue_backend = TaskIQSentimentBackend()
 
     async def custom_processing(self, result: dict) -> None:
         """Custom processing after inference"""
@@ -412,10 +410,7 @@ class SentimentService(ModalService):
     """Sentiment service with TaskIQ integration"""
 
     inference_implementation = SentimentPipeline
-
-    def __init__(self, queue_backend=None):
-        super().__init__(queue_backend=queue_backend)
-        self.model_name = "sentiment-analyzer"
+    model_name = "sentiment-analyzer"
 
 # ===== Demo =====
 
@@ -428,8 +423,9 @@ async def main():
     # Create TaskIQ backend
     taskiq_backend = TaskIQSentimentBackend()
 
-    # Create service with TaskIQ backend
-    service = SentimentService(queue_backend=taskiq_backend)
+    # Create service with TaskIQ backend (outside Modal, set it on the instance)
+    service = SentimentService()
+    service.queue_backend = taskiq_backend
 
     # Test direct queue sending
     print("\n📤 Testing queue message sending...")
@@ -569,10 +565,9 @@ app = modal.App(name="sentiment-with-taskiq")
 @app.cls(**modal_config.get_app_cls_settings())
 class SentimentApp(ModalService):
     inference_implementation = SentimentPipeline
-
-    def __init__(self):
-        super().__init__(queue_backend=taskiq_backend)
-        self.model_name = "sentiment-analyzer"
+    model_name: str = modal.parameter(default="sentiment-analyzer")
+    modal_utils: ModalConfig = modal_config
+    queue_backend = taskiq_backend
 
 @app.function(**modal_config.get_handler_settings())
 @modal.asgi_app()
@@ -677,7 +672,8 @@ async def test_sentiment_task():
 @pytest.mark.asyncio
 async def test_full_pipeline():
     """Test complete ML + TaskIQ pipeline"""
-    service = SentimentService(queue_backend=TaskIQSentimentBackend())
+    service = SentimentService()
+    service.queue_backend = TaskIQSentimentBackend()
 
     # Test inference with queue processing
     request = SentimentRequest(text="This is great!", user_id="test_user")

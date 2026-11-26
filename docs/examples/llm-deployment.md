@@ -264,10 +264,8 @@ class LLMApp(ModalService):
     model_name: str = modal.parameter(default="llm_model")
     modal_utils: ModalConfig = modal_utils
 
-    # Optional: Add queue backend for async processing
-    # def __init__(self, queue_backend=None):
-    #     super().__init__(queue_backend=queue_backend)
-    #     # Custom initialization here
+    # Optional: custom queue backend for async responses
+    # queue_backend = MyQueueBackend()
 
 # Create endpoints
 @app.function(**modal_utils.get_handler_settings())

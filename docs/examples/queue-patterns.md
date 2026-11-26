@@ -153,18 +153,14 @@ class SimplePipeline(InferencePipeline):
 ```python
 from modalkit.modal_service import ModalService
 
-class TextProcessingService(ModalService):
-    inference_implementation = SimplePipeline
-
-    def __init__(self, queue_backend=None):
-        super().__init__(queue_backend=queue_backend)
-        self.model_name = "text-processor"
-
 # Create TaskIQ backend
 taskiq_backend = TaskIQBackend("redis://localhost:6379")
 
-# Create service with TaskIQ integration
-service = TextProcessingService(queue_backend=taskiq_backend)
+# Modal constructs the service, so the backend is set on the class
+class TextProcessingService(ModalService):
+    inference_implementation = SimplePipeline
+    model_name = "text-processor"
+    queue_backend = taskiq_backend
 ```
 
 ### 3. Complete Modal App
@@ -184,10 +180,9 @@ app = modal.App(name="text-processing-with-taskiq")
 @app.cls(**modal_config.get_app_cls_settings())
 class TextProcessingApp(ModalService):
     inference_implementation = SimplePipeline
-
-    def __init__(self):
-        super().__init__(queue_backend=taskiq_backend)
-        self.model_name = "text-processor"
+    model_name: str = modal.parameter(default="text-processor")
+    modal_utils: ModalConfig = modal_config
+    queue_backend = taskiq_backend
 
 @app.function(**modal_config.get_handler_settings())
 @modal.asgi_app()
@@ -335,15 +330,12 @@ If you don't need TaskIQ's full features, ModalKit also provides simple built-in
 ```python
 from modalkit.task_queue import InMemoryBackend, SQSBackend
 
-# For testing
-memory_backend = InMemoryBackend()
-service = TextProcessingService(queue_backend=memory_backend)
-
-# For AWS SQS
-sqs_backend = SQSBackend(
-    queue_url="https://sqs.us-east-1.amazonaws.com/123456789/my-queue"
-)
-service = TextProcessingService(queue_backend=sqs_backend)
+class TextProcessingService(ModalService):
+    inference_implementation = SimplePipeline
+    # For testing
+    queue_backend = InMemoryBackend()
+    # For AWS SQS
+    # queue_backend = SQSBackend(queue_url="https://sqs.us-east-1.amazonaws.com/123456789/my-queue")
 ```
 
 ## Summary
@@ -352,7 +344,7 @@ TaskIQ integration with ModalKit is straightforward:
 
 1. **Install**: `pip install taskiq taskiq-redis`
 2. **Create backend**: Implement `TaskIQBackend` with your task logic
-3. **Inject**: Pass backend to `ModalService(queue_backend=taskiq_backend)`
+3. **Attach**: Set `queue_backend = taskiq_backend` on your `ModalService` subclass
 4. **Deploy**: Run TaskIQ workers separately from your Modal app
 
 The [taskiq-redis](https://github.com/taskiq-python/taskiq-redis) package makes Redis integration simple and provides production-ready features like acknowledgments, retries, and result storage.
