@@ -1172,6 +1172,7 @@ dev = [
     { name = "pytest-asyncio" },
     { name = "pytest-cov" },
     { name = "pytest-mock" },
+    { name = "pyyaml" },
     { name = "ruff" },
 ]
 
@@ -1197,6 +1198,7 @@ dev = [
     { name = "pytest-asyncio", specifier = ">=0.24.0" },
     { name = "pytest-cov", specifier = ">=4.0.0" },
     { name = "pytest-mock", specifier = ">=3.14.0" },
+    { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "ruff", specifier = ">=0.9.0" },
 ]
 

@@ -673,8 +673,6 @@ app_settings:
     max_containers: 20
     scaledown_window: 300
     retries: 3
-    memory: 16384  # 16GB RAM for data processing
-    cpu: 8.0       # 8 CPU cores
 
     # Mount trained models
     cloud_bucket_mounts:

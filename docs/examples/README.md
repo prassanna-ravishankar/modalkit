@@ -254,7 +254,6 @@ deployment_config:
   gpu: "A100"
   max_containers: 50
   scaledown_window: 1800
-  memory: 32768
   retries: 5
 ```
 

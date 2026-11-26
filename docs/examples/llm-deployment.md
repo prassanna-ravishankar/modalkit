@@ -202,7 +202,6 @@ app_settings:
     max_containers: 5
     scaledown_window: 600  # Keep warm for 10 minutes
     retries: 3
-    memory: 16384  # 16GB RAM
 
     # Mount models from cloud storage
     cloud_bucket_mounts:

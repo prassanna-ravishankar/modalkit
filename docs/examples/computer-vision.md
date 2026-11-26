@@ -333,7 +333,6 @@ app_settings:
     max_containers: 8
     scaledown_window: 600
     retries: 3
-    memory: 16384  # 16GB RAM for image processing
 
     # Mount models and datasets from cloud storage
     cloud_bucket_mounts:
@@ -609,8 +608,6 @@ deployment_config:
   scaledown_window: 300  # Scale down quickly
 
   # Use cheaper instances for light workloads
-  cpu: 8.0
-  memory: 32768
 ```
 
 ### Model Versioning

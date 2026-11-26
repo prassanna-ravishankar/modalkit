@@ -75,10 +75,6 @@ deployment_config:
   max_concurrent_inputs: 5  # Inputs per container
   scaledown_window: 300  # Idle seconds before scale-down
 
-  # CPU/Memory (when gpu is null)
-  memory: 8192  # MB
-  cpu: 4.0      # CPU cores
-
   # Retry configuration
   retries: 3
 
