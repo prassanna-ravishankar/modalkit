@@ -342,10 +342,6 @@ deployment_config:
   scaledown_window: 300
   retries: 3
 
-  # Memory/CPU (when gpu is null)
-  memory: 8192  # MB
-  cpu: 4.0      # cores
-
   # Volumes and mounts
   volumes:
     "/mnt/cache": "model-cache-vol"

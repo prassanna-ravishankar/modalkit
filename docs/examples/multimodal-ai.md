@@ -423,7 +423,6 @@ app_settings:
     max_containers: 4
     scaledown_window: 900  # 15 minutes
     retries: 3
-    memory: 32768  # 32GB RAM for large models
 
     # Mount pre-trained models
     cloud_bucket_mounts:
@@ -734,14 +733,11 @@ deployment_config:
 ### Cost Optimization
 
 ```yaml
-# Use spot instances for non-critical workloads
+# Smaller GPU and fast scale-down for non-critical workloads
 deployment_config:
   gpu: "T4"  # Cost-effective option
   max_containers: 16
   scaledown_window: 300  # Scale down quickly
-
-  # Preemptible instances
-  preemptible: true
 ```
 
 ### Monitoring and Observability

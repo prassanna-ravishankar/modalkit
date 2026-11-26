@@ -273,7 +273,6 @@ app_settings:
     max_containers: 10
     scaledown_window: 600  # 10 minutes
     retries: 3
-    memory: 8192  # 8GB RAM
 
     # Mount pre-trained models from cloud storage
     cloud_bucket_mounts:
@@ -573,8 +572,6 @@ batch_config:
 # modalkit.yaml - Cost-optimized setup
 deployment_config:
   gpu: null  # Use CPU for cost savings
-  cpu: 4.0
-  memory: 8192
   max_containers: 15
   scaledown_window: 300  # 5 minutes
 ```
