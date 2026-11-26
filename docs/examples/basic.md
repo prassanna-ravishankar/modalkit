@@ -333,10 +333,8 @@ class SentimentApp(ModalService):
     model_name: str = modal.parameter(default="sentiment_model")
     modal_utils: ModalConfig = modal_config
 
-    # Optional: Add queue backend for async processing
-    # def __init__(self, queue_backend=None):
-    #     super().__init__(queue_backend=queue_backend)
-    #     # Custom initialization here
+    # Optional: custom queue backend for async responses
+    # queue_backend = MyQueueBackend()
 
 # Create API endpoints
 @app.function(**modal_config.get_handler_settings())
@@ -448,9 +446,7 @@ taskiq_backend = TaskIQBackend("redis://redis:6379")
 
 class SentimentApp(ModalService):
     inference_implementation = SentimentAnalysisInference
-
-    def __init__(self):
-        super().__init__(queue_backend=taskiq_backend)
+    queue_backend = taskiq_backend
 ```
 
 **Basic async usage:**

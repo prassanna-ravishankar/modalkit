@@ -153,9 +153,8 @@ class TranslationApp(ModalService):
     model_name: str = modal.parameter(default="translation_model")
     modal_utils: ModalConfig = modal_config
 
-    # Optional: Inject custom queue backend
-    # def __init__(self, queue_backend=None):
-    #     super().__init__(queue_backend=queue_backend)
+    # Optional: custom queue backend for async responses
+    # queue_backend = MyQueueBackend()
 
 # Create API endpoints
 @app.function(**modal_config.get_handler_settings())
@@ -479,8 +478,10 @@ class TaskIQBackend:
         await process_result.kiq(message)
         return True
 
-# Inject TaskIQ backend
-service = MyService(queue_backend=TaskIQBackend())
+# Set the backend on your service class
+class MyService(ModalService):
+    inference_implementation = MyModel
+    queue_backend = TaskIQBackend()
 ```
 
 #### 3. Configuration-Based Queues
@@ -499,7 +500,9 @@ class MyCustomQueue:
         # Your custom queue implementation (RabbitMQ, Kafka, etc.)
         return True
 
-service = MyService(queue_backend=MyCustomQueue())
+class MyService(ModalService):
+    inference_implementation = MyModel
+    queue_backend = MyCustomQueue()
 ```
 
 #### Working Examples
